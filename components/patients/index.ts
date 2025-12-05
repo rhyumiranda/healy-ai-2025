@@ -1,0 +1,5 @@
+export { TagInput } from './tag-input'
+export { DeletePatientDialog } from './delete-patient-dialog'
+export { PatientTable } from './patient-table'
+export { PatientFilters } from './patient-filters'
+export { PatientPagination } from './patient-pagination'

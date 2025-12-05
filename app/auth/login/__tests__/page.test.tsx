@@ -27,7 +27,7 @@ describe('LoginPage', () => {
 
 			expect(screen.getByTestId('app-header')).toBeInTheDocument()
 			expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument()
-			expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument()
+			expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
 			expect(screen.getByText(/access your medassist ai account/i)).toBeInTheDocument()
 		})
 

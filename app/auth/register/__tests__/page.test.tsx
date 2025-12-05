@@ -85,11 +85,14 @@ describe('RegisterPage', () => {
 			expect(screen.getByText(/secure patient management/i)).toBeInTheDocument()
 		})
 
-		it('should render CheckCircle2 icons for each benefit', () => {
+		it('should render all benefit items in a list', () => {
 			const { container } = render(<RegisterPage />)
 
-			const checkIcons = container.querySelectorAll('.lucide-check-circle-2')
-			expect(checkIcons.length).toBeGreaterThan(0)
+			const benefitsList = container.querySelector('ul')
+			expect(benefitsList).toBeInTheDocument()
+
+			const benefitItems = container.querySelectorAll('li')
+			expect(benefitItems.length).toBe(4)
 		})
 	})
 

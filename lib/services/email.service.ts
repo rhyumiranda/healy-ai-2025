@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY 
+	? new Resend(process.env.RESEND_API_KEY) 
+	: null
 const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
 
 interface SendVerificationEmailParams {
@@ -15,10 +17,19 @@ export class EmailService {
 		name,
 		token,
 	}: SendVerificationEmailParams): Promise<void> {
+		if (!resend) {
+			console.error('❌ Resend client not initialized. Check RESEND_API_KEY environment variable.')
+			throw new Error('Email service not configured')
+		}
+
 		const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}`
 
+		console.log('📧 Attempting to send verification email to:', email)
+		console.log('🔗 Verification URL:', verificationUrl)
+		console.log('📤 From email:', FROM_EMAIL)
+
 		try {
-			await resend.emails.send({
+			const result = await resend.emails.send({
 				from: FROM_EMAIL,
 				to: email,
 				subject: 'Verify your MedAssist AI account',
@@ -77,15 +88,26 @@ export class EmailService {
 					</html>
 				`,
 			})
+			console.log('✅ Verification email sent successfully:', result)
 		} catch (error) {
-			console.error('Failed to send verification email:', error)
+			console.error('❌ Failed to send verification email:', error)
+			if (error instanceof Error) {
+				console.error('Error details:', error.message)
+			}
 			throw new Error('Failed to send verification email')
 		}
 	}
 
 	static async sendWelcomeEmail(email: string, name: string): Promise<void> {
+		if (!resend) {
+			console.warn('⚠️ Resend client not initialized. Welcome email not sent.')
+			return
+		}
+
+		console.log('📧 Sending welcome email to:', email)
+
 		try {
-			await resend.emails.send({
+			const result = await resend.emails.send({
 				from: FROM_EMAIL,
 				to: email,
 				subject: 'Welcome to MedAssist AI!',
@@ -143,8 +165,12 @@ export class EmailService {
 					</html>
 				`,
 			})
+			console.log('✅ Welcome email sent successfully:', result)
 		} catch (error) {
-			console.error('Failed to send welcome email:', error)
+			console.error('❌ Failed to send welcome email:', error)
+			if (error instanceof Error) {
+				console.error('Error details:', error.message)
+			}
 		}
 	}
 }

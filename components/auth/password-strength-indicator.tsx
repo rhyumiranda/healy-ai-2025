@@ -2,8 +2,8 @@
 
 import { CheckCircle2, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { PasswordValidation, PasswordStrength } from '../types'
-import { validatePassword, getPasswordStrength } from '../utils/validation'
+import type { PasswordValidation, PasswordStrength } from '@/src/modules/auth/types'
+import { validatePassword, getPasswordStrength } from '@/src/modules/auth/utils/validation'
 
 interface PasswordStrengthIndicatorProps {
 	password: string

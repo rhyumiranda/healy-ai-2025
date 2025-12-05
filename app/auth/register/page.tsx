@@ -8,15 +8,8 @@ import {
 } from '@/components/ui/card'
 import { AppHeader } from '@/components/common'
 import { RegistrationWizard } from '@/components/auth/registration-wizard'
-import type { DoctorRegistrationForm } from '@/src/modules/auth/types'
 
 export default function RegisterPage() {
-	async function handleRegistration(data: DoctorRegistrationForm) {
-		console.log('Registration data:', data)
-		await new Promise((resolve) => setTimeout(resolve, 2000))
-		console.log('Registration submitted successfully')
-	}
-
 	return (
 		<div className='flex min-h-screen flex-col'>
 			<AppHeader variant='auth' showBackButton />
@@ -33,7 +26,7 @@ export default function RegisterPage() {
 					</div>
 
 					<div className='space-y-6'>
-						<RegistrationWizard onSubmit={handleRegistration} />
+						<RegistrationWizard />
 
 						<Card className='border-dashed'>
 							<CardContent className='pt-6'>

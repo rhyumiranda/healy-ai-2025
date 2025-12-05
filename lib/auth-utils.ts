@@ -23,3 +23,4 @@ export function getVerificationTokenExpiry(): Date {
 	now.setHours(now.getHours() + 24)
 	return now
 }
+

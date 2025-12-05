@@ -89,11 +89,17 @@ export async function POST(req: Request) {
 			return { user, doctorProfile }
 		})
 
-		await EmailService.sendVerificationEmail({
-			email: result.user.email,
-			name: validatedData.fullName,
-			token: verificationToken,
-		})
+		console.log('📧 Sending verification email for registration...')
+		try {
+			await EmailService.sendVerificationEmail({
+				email: result.user.email,
+				name: validatedData.fullName,
+				token: verificationToken,
+			})
+			console.log('✅ Verification email sent successfully')
+		} catch (emailError) {
+			console.error('❌ Failed to send verification email:', emailError)
+		}
 
 		return NextResponse.json(
 			{
@@ -124,3 +130,4 @@ export async function POST(req: Request) {
 		)
 	}
 }
+

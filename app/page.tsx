@@ -7,7 +7,7 @@ import {
 	ComplianceSection,
 	CtaSection,
 	Footer
-} from '@/src/modules/landing'
+} from '@/components/landing'
 
 export default function Home() {
   return (

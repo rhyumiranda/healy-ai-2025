@@ -1,7 +1,9 @@
 'use client'
 
+import { useRouter, useSearchParams } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { Shield } from 'lucide-react'
+import { Shield, CheckCircle2 } from 'lucide-react'
 import {
 	Card,
 	CardContent,
@@ -9,18 +11,35 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card'
-import { AppHeader } from '@/src/modules/common'
+import { AppHeader } from '@/components/common'
 import { LoginFormModern } from '../components/login-form-modern'
 import type { LoginFormData } from '../types'
+import { Suspense } from 'react'
 
-export default function LoginPage() {
+function LoginContent() {
+	const router = useRouter()
+	const searchParams = useSearchParams()
+	const verified = searchParams.get('verified')
+
 	const handleLogin = async (data: LoginFormData) => {
-		await new Promise((resolve) => setTimeout(resolve, 1500))
+		try {
+			const result = await signIn('credentials', {
+				email: data.email,
+				password: data.password,
+				redirect: false,
+			})
 
-		console.log('Login submitted:', {
-			email: data.email,
-			rememberMe: data.rememberMe,
-		})
+			if (result?.error) {
+				throw new Error(result.error)
+			}
+
+			if (result?.ok) {
+				router.push('/dashboard')
+				router.refresh()
+			}
+		} catch (error) {
+			throw error
+		}
 	}
 
 	return (
@@ -29,6 +48,17 @@ export default function LoginPage() {
 
 			<div className="flex flex-1 items-center justify-center px-4 py-12">
 				<div className="mx-auto w-full max-w-sm">
+					{verified && (
+						<div className="mb-6 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 p-4">
+							<div className="flex items-center gap-2">
+								<CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+								<p className="text-sm font-medium text-green-900 dark:text-green-100">
+									Email verified successfully! You can now sign in.
+								</p>
+							</div>
+						</div>
+					)}
+
 					<div className="flex flex-col space-y-2 text-center mb-8">
 						<div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary mb-2">
 							<Shield className="h-6 w-6 text-primary-foreground" />
@@ -83,5 +113,13 @@ export default function LoginPage() {
 				</div>
 			</div>
 		</div>
+	)
+}
+
+export default function LoginPage() {
+	return (
+		<Suspense fallback={<div>Loading...</div>}>
+			<LoginContent />
+		</Suspense>
 	)
 }

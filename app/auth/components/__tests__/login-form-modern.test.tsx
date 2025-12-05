@@ -1,12 +1,15 @@
+import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LoginFormModern } from '../login-form-modern'
 import type { LoginFormData } from '../../types'
 
 jest.mock('next/link', () => {
-	return ({ children, href }: { children: React.ReactNode; href: string }) => (
+	const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
 		<a href={href}>{children}</a>
 	)
+	MockLink.displayName = 'MockLink'
+	return MockLink
 })
 
 describe('LoginFormModern', () => {

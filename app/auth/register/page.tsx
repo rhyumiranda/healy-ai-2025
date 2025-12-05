@@ -5,12 +5,9 @@ import { CheckCircle2 } from 'lucide-react'
 import {
 	Card,
 	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
 } from '@/components/ui/card'
-import { AppHeader } from '@/src/modules/common'
-import { RegistrationWizard } from '@/src/modules/auth/components/registration-wizard'
+import { AppHeader } from '@/components/common'
+import { RegistrationWizard } from '@/components/auth/registration-wizard'
 import type { DoctorRegistrationForm } from '@/src/modules/auth/types'
 
 export default function RegisterPage() {
@@ -23,7 +20,7 @@ export default function RegisterPage() {
 	return (
 		<div className='flex min-h-screen flex-col'>
 			<AppHeader variant='auth' showBackButton />
-
+			
 			<div className='flex flex-1 items-center justify-center px-4 py-12'>
 				<div className='mx-auto w-full max-w-lg'>
 					<div className='flex flex-col space-y-2 text-center mb-8'>
@@ -44,14 +41,14 @@ export default function RegisterPage() {
 									<div className='flex items-center gap-2'>
 										<div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary/10'>
 											<CheckCircle2 className='h-4 w-4 text-primary' />
-										</div>
+						</div>
 										<div>
 											<h3 className='text-sm font-semibold'>What you get</h3>
 											<p className='text-xs text-muted-foreground'>
 												Benefits of MedAssist AI
-											</p>
-										</div>
-									</div>
+							</p>
+						</div>
+					</div>
 
 									<ul className='space-y-2 text-sm text-muted-foreground'>
 										<li className='flex items-center gap-2'>
@@ -72,11 +69,11 @@ export default function RegisterPage() {
 										</li>
 									</ul>
 								</div>
-							</CardContent>
-						</Card>
+						</CardContent>
+					</Card>
 
 						<div className='text-center text-sm'>
-							Already have an account?{' '}
+						Already have an account?{' '}
 							<Link
 								href='/auth/login'
 								className='font-medium text-primary underline-offset-4 hover:underline'

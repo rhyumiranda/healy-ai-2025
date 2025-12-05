@@ -1,42 +1,16 @@
+import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import RegisterPage from '../page'
+import type { DoctorRegistrationForm } from '@/src/modules/auth/types'
 
-jest.mock('@/src/modules/common', () => ({
-	AppHeader: ({ variant, showBackButton }: { variant: string; showBackButton: boolean }) => (
-		<div data-testid="app-header" data-variant={variant} data-show-back-button={showBackButton}>
-			App Header
-		</div>
-	),
-}))
-
-jest.mock('@/src/modules/auth/components/registration-wizard', () => ({
-	RegistrationWizard: ({ onSubmit }: { onSubmit: (data: any) => Promise<void> }) => (
-		<div data-testid="registration-wizard">
-			<button
-				onClick={() =>
-					onSubmit({
-						fullName: 'Dr. John Doe',
-						email: 'john@example.com',
-						password: 'SecurePass123!',
-						confirmPassword: 'SecurePass123!',
-						medicalLicenseNumber: 'ML123456',
-						specialty: 'Cardiology',
-						phoneNumber: '+1234567890',
-						acceptTerms: true,
-					})
-				}
-			>
-				Submit Registration
-			</button>
-		</div>
-	),
-}))
 
 jest.mock('next/link', () => {
-	return ({ children, href }: { children: React.ReactNode; href: string }) => (
+	const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
 		<a href={href}>{children}</a>
 	)
+	MockLink.displayName = 'MockLink'
+	return MockLink
 })
 
 describe('RegisterPage', () => {
@@ -125,7 +99,7 @@ describe('RegisterPage', () => {
 	describe('Form Submission', () => {
 		it('should handle registration submission', async () => {
 			const user = userEvent.setup()
-			const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+			const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
 
 			render(<RegisterPage />)
 
@@ -148,7 +122,7 @@ describe('RegisterPage', () => {
 
 		it('should log success message after registration', async () => {
 			const user = userEvent.setup()
-			const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+			const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
 
 			render(<RegisterPage />)
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { AppHeader } from '@/src/modules/common'
+import { AppHeader } from '@/components/common'
 
 export function Navigation() {
 	return <AppHeader variant="landing" />

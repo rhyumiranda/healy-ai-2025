@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import type { DoctorRegistrationForm, FormErrors } from '../types'
+import type { DoctorRegistrationForm, FormErrors } from '@/src/modules/auth'
 
 interface RegistrationFormTermsProps {
 	formData: Partial<DoctorRegistrationForm>
@@ -74,3 +74,5 @@ export function RegistrationFormTerms({
 		</div>
 	)
 }
+
+

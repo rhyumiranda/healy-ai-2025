@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { ArrowRight, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { AuroraBackground } from '@/src/components/ui/shadcn-io/aurora-background'
-import { NAV_LINKS } from '../constants'
+import { AuroraBackground } from '@/components/aurora-background'
+import { NAV_LINKS } from './constants'
 
 const containerVariants = {
 	hidden: { opacity: 0 },

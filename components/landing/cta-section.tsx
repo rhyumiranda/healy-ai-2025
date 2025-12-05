@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { NAV_LINKS } from '../constants'
+import { NAV_LINKS } from './constants'
 
 export function CtaSection() {
 	return (

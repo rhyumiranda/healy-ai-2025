@@ -1,8 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { STATS } from '../constants'
 import { AnimatedCounter } from './animated-counter'
+import { STATS } from './constants'
 
 const containerVariants = {
 	hidden: { opacity: 0, y: 40 },

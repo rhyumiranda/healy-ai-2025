@@ -9,8 +9,8 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { FormFieldWrapper } from './form-field-wrapper'
-import type { DoctorRegistrationForm, FormErrors } from '../types'
-import { MEDICAL_SPECIALTIES } from '../constants'
+import type { DoctorRegistrationForm, FormErrors } from '@/src/modules/auth'
+import { MEDICAL_SPECIALTIES } from '@/src/modules/auth'
 
 interface RegistrationFormProfessionalProps {
 	formData: Partial<DoctorRegistrationForm>

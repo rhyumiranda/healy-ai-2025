@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { FOOTER_LINKS } from '../constants'
+import { FOOTER_LINKS } from './constants'
 
 export function Footer() {
 	return (

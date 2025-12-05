@@ -7,15 +7,10 @@ import { RegistrationFormPersonal } from './registration-form-personal'
 import { RegistrationFormProfessional } from './registration-form-professional'
 import { RegistrationFormSecurity } from './registration-form-security'
 import { RegistrationFormTerms } from './registration-form-terms'
-import { useRegistrationWizard } from '../hooks/use-registration-wizard'
-import { REGISTRATION_STEPS } from '../types/wizard'
-import type { DoctorRegistrationForm } from '../types'
+import { useRegistrationWizard } from '@/src/modules/auth'
+import { REGISTRATION_STEPS } from '@/src/modules/auth'
 
-interface RegistrationWizardProps {
-	onSubmit: (data: DoctorRegistrationForm) => Promise<void>
-}
-
-export function RegistrationWizard({ onSubmit }: RegistrationWizardProps) {
+export function RegistrationWizard() {
 	const {
 		currentStep,
 		formData,
@@ -136,7 +131,7 @@ export function RegistrationWizard({ onSubmit }: RegistrationWizardProps) {
 							isSubmitting={isSubmitting}
 							onBack={handleBack}
 							onNext={handleNext}
-							onSubmit={() => handleSubmit(onSubmit)}
+							onSubmit={handleSubmit}
 						/>
 					</div>
 				</CardContent>

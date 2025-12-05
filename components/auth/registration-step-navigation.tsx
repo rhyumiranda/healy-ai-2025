@@ -68,3 +68,13 @@ export function RegistrationStepNavigation({
 		</div>
 	)
 }
+
+interface RegistrationStepNavigationProps {
+	currentStep: number
+	totalSteps: number
+	canGoNext: boolean
+	isSubmitting: boolean
+	onBack: () => void
+	onNext: () => void
+	onSubmit: () => void
+}

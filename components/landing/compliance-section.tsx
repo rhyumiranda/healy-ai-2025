@@ -2,7 +2,7 @@
 
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { COMPLIANCE_FEATURES } from '../constants'
+import { COMPLIANCE_FEATURES } from './constants'
 
 const containerVariants = {
 	hidden: { opacity: 0, y: 40 },

@@ -54,3 +54,13 @@ export function PasswordInput({
 		</div>
 	)
 }
+
+interface PasswordInputProps {
+	id: string
+	value: string
+	onChange: (value: string) => void
+	placeholder?: string
+	className?: string
+	disabled?: boolean
+	autoComplete?: string
+}

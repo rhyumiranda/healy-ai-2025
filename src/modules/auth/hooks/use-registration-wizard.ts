@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import type { DoctorRegistrationForm, FormErrors } from '../types'
+import { useRouter } from 'next/navigation'
+import type { DoctorRegistrationForm, FormErrors, RegistrationResponse } from '../types'
 import { validateRegistrationForm } from '../utils/validation'
 import { REGISTRATION_STEPS } from '../types/wizard'
 
 export function useRegistrationWizard() {
+	const router = useRouter()
 	const [currentStep, setCurrentStep] = useState(1)
 	const [formData, setFormData] = useState<Partial<DoctorRegistrationForm>>({
 		fullName: '',
@@ -155,7 +157,7 @@ export function useRegistrationWizard() {
 	}, [currentStep])
 
 	const handleSubmit = useCallback(
-		async (onSubmit: (data: DoctorRegistrationForm) => Promise<void>) => {
+		async () => {
 			if (!validateCurrentStep()) {
 				return
 			}
@@ -176,13 +178,28 @@ export function useRegistrationWizard() {
 
 			setIsSubmitting(true)
 			try {
-				await onSubmit(formData as DoctorRegistrationForm)
+				const response = await fetch('/api/auth/register', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(formData),
+				})
+
+				const data: RegistrationResponse = await response.json()
+
+				if (!response.ok) {
+					throw new Error(data.error || 'Registration failed')
+				}
+
 				try {
 					sessionStorage.removeItem('form_registration')
 					sessionStorage.removeItem('form_registration_step')
 				} catch (e) {
 					console.error('Failed to clear saved data:', e)
 				}
+
+				router.push('/auth/verification-pending')
 			} catch (error) {
 				setErrors({
 					general: {
@@ -196,7 +213,7 @@ export function useRegistrationWizard() {
 				setIsSubmitting(false)
 			}
 		},
-		[formData, validateCurrentStep]
+		[formData, validateCurrentStep, router]
 	)
 
 	return {

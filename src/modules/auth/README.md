@@ -312,3 +312,146 @@ Supported specialties (from `constants/index.ts`):
 - [ ] Step completion animations
 - [ ] Mobile app deep linking for photo uploads
 - [ ] Analytics tracking for step completion rates
+
+```tsx
+interface RegistrationStepNavigationProps {
+  currentStep: number
+  totalSteps: number
+  canGoNext: boolean
+  isSubmitting: boolean
+  onBack: () => void
+  onNext: () => void
+  onSubmit: () => void
+}
+```
+
+#### useRegistrationWizard Hook
+
+```tsx
+function useRegistrationWizard() {
+  return {
+    currentStep: number
+    formData: Partial<DoctorRegistrationForm>
+    errors: FormErrors
+    isSubmitting: boolean
+    totalSteps: number
+    handleChange: (field, value) => void
+    handleNext: () => void
+    handleBack: () => void
+    handleSubmit: (onSubmit) => Promise<void>
+    canProceedToNextStep: boolean
+  }
+}
+```
+
+## Design Principles
+
+### Component Modularity & Granularity
+
+Each component has a **single, well-defined responsibility**:
+
+#### Wizard Components
+- **RegistrationWizard**: Main container orchestrating the multi-step flow
+- **RegistrationStepIndicator**: Visual progress tracker
+- **RegistrationStepNavigation**: Navigation buttons with validation
+
+#### Form Sections (Separated by concern)
+- **RegistrationFormPersonal**: Personal contact information
+- **RegistrationFormProfessional**: Medical credentials
+- **RegistrationFormSecurity**: Password creation
+- **RegistrationFormTerms**: Terms acceptance
+
+#### Reusable Components
+- **PasswordInput**: Password field with show/hide toggle
+- **FormFieldWrapper**: Consistent label, error, and description display
+- **PasswordStrengthIndicator**: Visual password strength feedback
+
+### Benefits
+
+1. **Reduced Cognitive Load**: Users focus on one section at a time
+2. **Better Completion Rates**: Smaller steps feel more achievable
+3. **Clear Progress**: Users know how far they are in the process
+4. **Flexible Navigation**: Easy to go back and correct mistakes
+5. **Maintainability**: Each step can be updated independently
+6. **Reusability**: Components can be used in other forms
+7. **Testability**: Each component can be tested in isolation
+
+## Validation Strategy
+
+### Per-Step Validation
+- Only validates fields in the current step
+- Shows errors immediately when moving to next step
+- Doesn't validate previous steps when going back
+
+### Final Validation
+- On submission, validates all steps
+- If errors found, navigates to the first step with errors
+- Shows all errors for that step
+
+### Real-Time Validation
+- Clears errors as user types
+- Enables/disables Next button based on field completion
+- Password strength indicator updates in real-time
+
+## Styling
+
+The wizard uses:
+- **ShadCN UI components**: Button, Card, Input, Label, Select, Checkbox, Separator
+- **Tailwind CSS**: Utility-first styling
+- **Lucide Icons**: Check, ChevronLeft, ChevronRight, Loader2
+- **Consistent spacing**: Design system scale (4px increments)
+- **Professional theme**: Serious and trustworthy for medical use
+
+## Accessibility Features
+
+- ✅ Proper ARIA labels (`aria-current`, `aria-invalid`, `aria-describedby`)
+- ✅ Keyboard navigation (Tab, Enter, Escape)
+- ✅ Focus management on step transitions
+- ✅ Auto-scroll to errors
+- ✅ Screen reader friendly progress indicators
+- ✅ Semantic HTML structure
+- ✅ Loading states clearly communicated
+
+## Responsive Design
+
+- ✅ Mobile-first approach
+- ✅ Compact progress indicator on mobile (shows current step below)
+- ✅ Full step titles visible on desktop
+- ✅ Touch-friendly navigation buttons
+- ✅ Adaptive card padding
+- ✅ Fluid typography
+
+## Medical Specialties
+
+Supported specialties (from `constants/index.ts`):
+- Cardiology
+- Dermatology
+- Emergency Medicine
+- Endocrinology
+- Family Medicine
+- Gastroenterology
+- General Surgery
+- Internal Medicine
+- Neurology
+- Obstetrics & Gynecology
+- Oncology
+- Ophthalmology
+- Orthopedics
+- Otolaryngology (ENT)
+- Pediatrics
+- Psychiatry
+- Radiology
+- Urology
+
+## Future Enhancements
+
+- [ ] Add save draft functionality (localStorage)
+- [ ] Email verification step
+- [ ] Medical license verification API integration
+- [ ] Photo upload step
+- [ ] Additional credential fields (certifications, affiliations)
+- [ ] Two-factor authentication setup step
+- [ ] Progressive field validation (as user types)
+- [ ] Step completion animations
+- [ ] Mobile app deep linking for photo uploads
+- [ ] Analytics tracking for step completion rates

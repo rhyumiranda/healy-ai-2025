@@ -3,7 +3,7 @@
 import { FormFieldWrapper } from './form-field-wrapper'
 import { PasswordInput } from './password-input'
 import { PasswordStrengthIndicator } from './password-strength-indicator'
-import type { DoctorRegistrationForm, FormErrors } from '../types'
+import type { DoctorRegistrationForm, FormErrors } from '@/src/modules/auth'
 
 interface RegistrationFormSecurityProps {
 	formData: Partial<DoctorRegistrationForm>

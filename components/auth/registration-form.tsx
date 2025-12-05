@@ -8,8 +8,8 @@ import { RegistrationFormPersonal } from './registration-form-personal'
 import { RegistrationFormProfessional } from './registration-form-professional'
 import { RegistrationFormSecurity } from './registration-form-security'
 import { RegistrationFormTerms } from './registration-form-terms'
-import type { DoctorRegistrationForm, FormErrors } from '../types'
-import { validateRegistrationForm } from '../utils/validation'
+import type { DoctorRegistrationForm, FormErrors } from '@/src/modules/auth'
+import { validateRegistrationForm } from '@/src/modules/auth'
 
 interface RegistrationFormProps {
 	onSubmit: (data: DoctorRegistrationForm) => Promise<void>
@@ -102,7 +102,7 @@ export function RegistrationForm({ onSubmit }: RegistrationFormProps) {
 				errors={errors}
 				onChange={handleChange}
 				disabled={isSubmitting}
-			/>
+					/>
 
 			<Separator />
 

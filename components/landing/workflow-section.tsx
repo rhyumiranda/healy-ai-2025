@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
-import { WORKFLOW_STEPS } from '../constants'
+import { WORKFLOW_STEPS } from './constants'
 
 const containerVariants = {
 	hidden: { opacity: 0 },

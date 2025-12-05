@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FEATURES } from '../constants'
+import { FEATURES } from './constants'
 
 const containerVariants = {
 	hidden: { opacity: 0 },

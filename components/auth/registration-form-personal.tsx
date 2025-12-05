@@ -2,7 +2,7 @@
 
 import { Input } from '@/components/ui/input'
 import { FormFieldWrapper } from './form-field-wrapper'
-import type { DoctorRegistrationForm, FormErrors } from '../types'
+import type { DoctorRegistrationForm, FormErrors } from '@/src/modules/auth'
 
 interface RegistrationFormPersonalProps {
 	formData: Partial<DoctorRegistrationForm>

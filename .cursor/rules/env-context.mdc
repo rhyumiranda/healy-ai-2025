@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+
+
+# Connect to Supabase via connection pooling
+DATABASE_URL
+DIRECT_URL
+
+AUTH_SECRET
+OPENAI_API_KEY

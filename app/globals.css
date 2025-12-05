@@ -41,6 +41,19 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --animate-aurora: aurora 60s ease-in-out infinite;
+}
+
+@keyframes aurora {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 :root {
@@ -119,4 +132,8 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.animate-aurora {
+  animation: aurora 60s ease-in-out infinite;
 }

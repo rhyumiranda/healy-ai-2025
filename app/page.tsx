@@ -10,7 +10,7 @@ import {
 } from '@/src/modules/landing'
 
 export default function Home() {
-	return (
+  return (
 		<div className="min-h-screen bg-white">
 			<Navigation />
 			<main>
@@ -20,8 +20,8 @@ export default function Home() {
 				<WorkflowSection />
 				<ComplianceSection />
 				<CtaSection />
-			</main>
+      </main>
 			<Footer />
-		</div>
+    </div>
 	)
 }

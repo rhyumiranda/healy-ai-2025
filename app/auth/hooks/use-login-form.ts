@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { LoginFormData, LoginFormErrors, LoginFormState } from '../types'
 
 export function useLoginForm() {
@@ -14,6 +14,48 @@ export function useLoginForm() {
 		isSubmitting: false,
 		isValid: false,
 	})
+
+	const [isInitialized, setIsInitialized] = useState(false)
+
+	useEffect(() => {
+		if (typeof window !== 'undefined' && !isInitialized) {
+			try {
+				const savedData = sessionStorage.getItem('form_login')
+				if (savedData) {
+					const parsed = JSON.parse(savedData) as Partial<LoginFormData>
+					setFormState((prev) => ({
+						...prev,
+						data: {
+							...prev.data,
+							email: parsed.email || '',
+							rememberMe: parsed.rememberMe || false,
+						},
+					}))
+				}
+			} catch (error) {
+				console.error('Failed to load saved login data:', error)
+			}
+			setIsInitialized(true)
+		}
+	}, [isInitialized])
+
+	useEffect(() => {
+		if (!isInitialized) return
+
+		const timeoutId = setTimeout(() => {
+			try {
+				const dataToSave = {
+					email: formState.data.email,
+					rememberMe: formState.data.rememberMe,
+				}
+				sessionStorage.setItem('form_login', JSON.stringify(dataToSave))
+			} catch (error) {
+				console.error('Failed to save login data:', error)
+			}
+		}, 500)
+
+		return () => clearTimeout(timeoutId)
+	}, [formState.data.email, formState.data.rememberMe, isInitialized])
 
 	const validateEmail = useCallback((email: string): string | undefined => {
 		if (!email) {
@@ -82,6 +124,11 @@ export function useLoginForm() {
 
 			try {
 				await onSubmit(formState.data)
+				try {
+					sessionStorage.removeItem('form_login')
+				} catch (e) {
+					console.error('Failed to clear saved data:', e)
+				}
 			} catch (error) {
 				setFormState((prev) => ({
 					...prev,

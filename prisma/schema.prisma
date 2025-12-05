@@ -1,15 +1,163 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+	provider = "prisma-client-js"
+	output   = "../lib/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+	provider = "postgresql"
+	url      = env("DATABASE_URL")
+	directUrl = env("DIRECT_URL")
+}
+
+model User {
+	id            String    @id @default(cuid())
+	name          String?
+	email         String    @unique
+	emailVerified DateTime?
+	password      String?
+	image         String?
+	createdAt     DateTime  @default(now())
+	updatedAt     DateTime  @updatedAt
+	
+	accounts       Account[]
+	sessions       Session[]
+	doctorProfile  DoctorProfile?
+	patients       Patient[]
+	treatmentPlans TreatmentPlan[]
+	
+	@@map("users")
+}
+
+model Account {
+	id                String  @id @default(cuid())
+	userId            String
+	type              String
+	provider          String
+	providerAccountId String
+	refresh_token     String?
+	access_token      String?
+	expires_at        Int?
+	token_type        String?
+	scope             String?
+	id_token          String?
+	session_state     String?
+	
+	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+	
+	@@unique([provider, providerAccountId])
+	@@map("accounts")
+}
+
+model Session {
+	id           String   @id @default(cuid())
+	sessionToken String   @unique
+	userId       String
+	expires      DateTime
+	user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+	
+	@@map("sessions")
+}
+
+model VerificationToken {
+	identifier String
+	token      String   @unique
+	expires    DateTime
+	
+	@@unique([identifier, token])
+	@@map("verification_tokens")
+}
+
+model DoctorProfile {
+	id                    String   @id @default(cuid())
+	userId                String   @unique
+	user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+	
+	fullName              String
+	medicalLicenseNumber  String   @unique
+	specialty             String
+	phoneNumber           String
+	isVerified            Boolean  @default(false)
+	
+	createdAt             DateTime @default(now())
+	updatedAt             DateTime @updatedAt
+	
+	@@map("doctor_profiles")
+}
+
+model Patient {
+	id                 String   @id @default(cuid())
+	doctorId           String
+	doctor             User     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+	
+	name               String
+	dateOfBirth        DateTime
+	gender             Gender
+	medicalHistory     String?
+	currentMedications String[] @default([])
+	allergies          String[] @default([])
+	chronicConditions  String[] @default([])
+	
+	createdAt          DateTime @default(now())
+	updatedAt          DateTime @updatedAt
+	
+	treatmentPlans     TreatmentPlan[]
+	
+	@@index([doctorId])
+	@@map("patients")
+}
+
+model TreatmentPlan {
+	id                  String     @id @default(cuid())
+	patientId           String
+	patient             Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+	doctorId            String
+	doctor              User       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+	
+	chiefComplaint      String
+	currentSymptoms     String
+	vitalSigns          Json?
+	physicalExamNotes   String?
+	
+	aiRecommendations   Json?
+	finalPlan           Json?
+	
+	riskLevel           RiskLevel?
+	riskFactors         String[]   @default([])
+	riskJustification   String?
+	
+	drugInteractions    Json[]     @default([])
+	contraindications   Json[]     @default([])
+	alternatives        Json[]     @default([])
+	
+	status              PlanStatus @default(DRAFT)
+	wasModified         Boolean    @default(false)
+	modificationNotes   String?
+	
+	createdAt           DateTime   @default(now())
+	updatedAt           DateTime   @updatedAt
+	approvedAt          DateTime?
+	
+	@@index([patientId])
+	@@index([doctorId])
+	@@index([status])
+	@@index([createdAt])
+	@@map("treatment_plans")
+}
+
+enum Gender {
+	MALE
+	FEMALE
+	OTHER
+}
+
+enum RiskLevel {
+	LOW
+	MEDIUM
+	HIGH
+}
+
+enum PlanStatus {
+	DRAFT
+	APPROVED
+	REJECTED
 }

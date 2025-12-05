@@ -17,6 +17,7 @@ This comprehensive guide outlines best practices, conventions, and standards for
     - AVOID making comments at all
     - Impose component modularity and granularity
     - Avoid creating .md unless specified.
+    
 
     Code Implementation Guidelines
     Planning Phase

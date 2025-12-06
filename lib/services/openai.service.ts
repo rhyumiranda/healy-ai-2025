@@ -1,7 +1,7 @@
 /**
  * OpenAI Service
  * Real OpenAI integration for medical treatment plan generation
- * With external API validation and evidence-based references
+ * With external API validation, evidence-based references, and enhanced safety validation
  */
 
 import OpenAI from 'openai'
@@ -18,6 +18,15 @@ import { MedicalApisService } from './medical-apis.service'
 import { PubMedService, type ClinicalReference } from './pubmed.service'
 import { ConfidenceService, type ConfidenceResult } from './confidence.service'
 import { AssistantService } from './assistant.service'
+import { RetrievalService, type RAGContext } from './rag'
+import {
+	SeverityDetectionService,
+	CascadeValidatorService,
+	GroundingVerificationService,
+	type SeverityAssessment,
+	type CascadeValidationResult,
+	type GroundingVerificationResult,
+} from './safety'
 
 // ============================================
 // Types
@@ -44,6 +53,15 @@ export interface EnhancedAIAnalysisResponse extends Omit<AIAnalysisResponse, 'me
 		temperature: number
 		validationSources: string[]
 		generatedAt: string
+		usedRAG: boolean
+		ragSourceCount?: number
+	}
+	safetyMetadata?: {
+		severityAssessment: SeverityAssessment
+		cascadeValidation?: CascadeValidationResult
+		groundingVerification?: GroundingVerificationResult
+		requiresManualReview: boolean
+		blockedRecommendation: boolean
 	}
 }
 

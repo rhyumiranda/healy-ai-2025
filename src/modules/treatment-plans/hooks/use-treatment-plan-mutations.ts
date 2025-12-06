@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import type { TreatmentPlan, CreateTreatmentPlanInput, UpdateTreatmentPlanInput } from '../types'
 import { TreatmentPlanService } from '../services/treatment-plan.service'
 
@@ -23,6 +24,7 @@ export function useCreateTreatmentPlan(): UseCreateTreatmentPlanReturn {
 
 			try {
 				const plan = await TreatmentPlanService.createTreatmentPlan(input)
+				toast.success('Treatment plan created successfully')
 				router.push(`/dashboard/treatment-plans/${plan.id}`)
 				return plan
 			} catch (err) {
@@ -59,6 +61,7 @@ export function useUpdateTreatmentPlan(): UseUpdateTreatmentPlanReturn {
 
 			try {
 				const plan = await TreatmentPlanService.updateTreatmentPlan(id, input)
+				toast.success('Treatment plan updated successfully')
 				return plan
 			} catch (err) {
 				setError(err instanceof Error ? err.message : 'Failed to update treatment plan')
@@ -95,6 +98,7 @@ export function useDeleteTreatmentPlan(): UseDeleteTreatmentPlanReturn {
 
 			try {
 				await TreatmentPlanService.deleteTreatmentPlan(id)
+				toast.success('Treatment plan deleted successfully')
 				router.push('/dashboard/treatment-plans')
 				return true
 			} catch (err) {
@@ -132,6 +136,7 @@ export function useCloneTreatmentPlan(): UseCloneTreatmentPlanReturn {
 
 			try {
 				const plan = await TreatmentPlanService.cloneTreatmentPlan(id, newPatientId)
+				toast.success('Treatment plan cloned successfully')
 				router.push(`/dashboard/treatment-plans/${plan.id}`)
 				return plan
 			} catch (err) {

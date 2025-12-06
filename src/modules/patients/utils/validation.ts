@@ -60,18 +60,18 @@ export const patientMedicationsSchema = z.object({
 export const patientVitalsSchema = z.object({
 	bloodPressureSystolic: z
 		.number()
-		.min(60, 'Systolic BP must be at least 60 mmHg')
-		.max(250, 'Systolic BP must be less than 250 mmHg')
+		.min(60, 'Systolic BP must be at least 60')
+		.max(250, 'Systolic BP must be less than 250')
 		.optional(),
 	bloodPressureDiastolic: z
 		.number()
-		.min(40, 'Diastolic BP must be at least 40 mmHg')
-		.max(150, 'Diastolic BP must be less than 150 mmHg')
+		.min(40, 'Diastolic BP must be at least 40')
+		.max(150, 'Diastolic BP must be less than 150')
 		.optional(),
 	heartRate: z
 		.number()
-		.min(30, 'Heart rate must be at least 30 bpm')
-		.max(250, 'Heart rate must be less than 250 bpm')
+		.min(30, 'Heart rate must be at least 30')
+		.max(250, 'Heart rate must be less than 250')
 		.optional(),
 	temperature: z
 		.number()
@@ -80,13 +80,13 @@ export const patientVitalsSchema = z.object({
 		.optional(),
 	respiratoryRate: z
 		.number()
-		.min(8, 'Respiratory rate must be at least 8/min')
-		.max(40, 'Respiratory rate must be less than 40/min')
+		.min(8, 'Respiratory rate must be at least 8')
+		.max(40, 'Respiratory rate must be less than 40')
 		.optional(),
 	oxygenSaturation: z
 		.number()
 		.min(70, 'Oxygen saturation must be at least 70%')
-		.max(100, 'Oxygen saturation cannot exceed 100%')
+		.max(100, 'Oxygen saturation must be less than or equal to 100%')
 		.optional(),
 	chiefComplaint: z
 		.string()

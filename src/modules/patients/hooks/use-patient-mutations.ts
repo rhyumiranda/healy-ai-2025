@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import type { CreatePatientInput, UpdatePatientInput, Patient } from '../types'
 import { PatientService } from '../services/patient.service'
 
@@ -16,6 +17,7 @@ export function useCreatePatient() {
 				setIsLoading(true)
 				setError(null)
 				const patient = await PatientService.createPatient(input)
+				toast.success('Patient created successfully')
 				router.push(`/dashboard/patients/${patient.id}`)
 				return patient
 			} catch (err) {
@@ -46,6 +48,7 @@ export function useUpdatePatient() {
 				setIsLoading(true)
 				setError(null)
 				const patient = await PatientService.updatePatient(id, input)
+				toast.success('Patient updated successfully')
 				return patient
 			} catch (err) {
 				const errorMessage =
@@ -73,6 +76,7 @@ export function useDeletePatient() {
 				setIsLoading(true)
 				setError(null)
 				await PatientService.deletePatient(id)
+				toast.success('Patient deleted successfully')
 				router.push('/dashboard/patients')
 				return true
 			} catch (err) {
@@ -89,3 +93,4 @@ export function useDeletePatient() {
 
 	return { deletePatient, isLoading, error }
 }
+

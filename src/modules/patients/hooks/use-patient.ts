@@ -34,3 +34,4 @@ export function usePatient(id: string) {
 
 	return { patient, isLoading, error, refetch }
 }
+

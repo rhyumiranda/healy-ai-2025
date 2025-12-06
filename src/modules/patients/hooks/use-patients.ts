@@ -48,3 +48,4 @@ export function usePatients(initialFilters: PatientFilters = {}) {
 		refetch,
 	}
 }
+

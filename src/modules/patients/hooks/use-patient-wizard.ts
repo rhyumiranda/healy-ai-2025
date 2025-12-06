@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import type {
 	PatientWizardData,
 	WizardStep,
@@ -8,7 +8,6 @@ import {
 	patientDemographicsSchema,
 	patientMedicalHistorySchema,
 	patientMedicationsSchema,
-	patientVitalsSchema,
 } from '../utils/validation'
 import { useCreatePatient } from './use-patient-mutations'
 
@@ -23,25 +22,28 @@ const INITIAL_FORM_DATA: PatientWizardData = {
 	chronicConditions: [],
 	currentMedications: [],
 	allergies: [],
-	bloodPressureSystolic: undefined,
-	bloodPressureDiastolic: undefined,
-	heartRate: undefined,
-	temperature: undefined,
-	respiratoryRate: undefined,
-	oxygenSaturation: undefined,
-	chiefComplaint: '',
-	currentSymptoms: [],
 }
 
-const TOTAL_STEPS = 5
+const TOTAL_STEPS = 4
 
 export function usePatientWizard() {
 	const [currentStep, setCurrentStep] = useState<WizardStep>(1)
 	const [formData, setFormData] = useState<PatientWizardData>(INITIAL_FORM_DATA)
 	const { createPatient, isLoading, error } = useCreatePatient()
 
+	const formDataRef = useRef<PatientWizardData>(formData)
+
+	useEffect(() => {
+		formDataRef.current = formData
+	}, [formData])
+
 	const updateFormData = useCallback((data: Partial<PatientWizardData>) => {
-		setFormData((prev) => ({ ...prev, ...data }))
+		console.log('[Wizard] updateFormData called with:', data)
+		setFormData((prev) => {
+			const newState = { ...prev, ...data }
+			console.log('[Wizard] New formData state:', newState)
+			return newState
+		})
 	}, [])
 
 	const validateStep = useCallback(
@@ -59,11 +61,7 @@ export function usePatientWizard() {
 					const result = patientMedicationsSchema.safeParse(formData)
 					return result.success
 				}
-				case 4: {
-					const result = patientVitalsSchema.safeParse(formData)
-					return result.success
-				}
-				case 5:
+				case 4:
 					return true
 				default:
 					return false
@@ -106,16 +104,6 @@ export function usePatientWizard() {
 				}
 				break
 			}
-			case 4: {
-				const result = patientVitalsSchema.safeParse(formData)
-				if (!result.success) {
-					result.error.issues.forEach((issue) => {
-						const path = issue.path.join('.')
-						errors[path] = issue.message
-					})
-				}
-				break
-			}
 		}
 
 		return errors
@@ -149,17 +137,30 @@ export function usePatientWizard() {
 	}, [])
 
 	const submitForm = useCallback(async () => {
+		const currentFormData = formDataRef.current
+		console.log('[Wizard] Submitting formData:', currentFormData)
+
 		const submitData = {
-			name: formData.name,
-			dateOfBirth: formData.dateOfBirth,
-			gender: formData.gender,
-			medicalHistory: formData.medicalHistory || undefined,
-			currentMedications: formData.currentMedications || [],
-			allergies: formData.allergies || [],
-			chronicConditions: formData.chronicConditions || [],
+			name: currentFormData.name,
+			dateOfBirth: currentFormData.dateOfBirth,
+			gender: currentFormData.gender,
+			weight: currentFormData.weight,
+			height: currentFormData.height,
+			bloodType: currentFormData.bloodType,
+			medicalHistory: currentFormData.medicalHistory || undefined,
+			currentMedications: Array.isArray(currentFormData.currentMedications)
+				? currentFormData.currentMedications
+				: [],
+			allergies: Array.isArray(currentFormData.allergies)
+				? currentFormData.allergies
+				: [],
+			chronicConditions: Array.isArray(currentFormData.chronicConditions)
+				? currentFormData.chronicConditions
+				: [],
 		}
+		console.log('[Wizard] Submit payload:', submitData)
 		return createPatient(submitData)
-	}, [formData, createPatient])
+	}, [createPatient])
 
 	const progressPercentage = useMemo(() => {
 		return (currentStep / TOTAL_STEPS) * 100

@@ -4,15 +4,6 @@ export type { Gender, PlanStatus, RiskLevel }
 
 export type BloodType = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-'
 
-export interface VitalSigns {
-	bloodPressureSystolic?: number
-	bloodPressureDiastolic?: number
-	heartRate?: number
-	temperature?: number
-	respiratoryRate?: number
-	oxygenSaturation?: number
-}
-
 export interface PatientDemographicsData {
 	name: string
 	dateOfBirth: string
@@ -32,18 +23,12 @@ export interface PatientMedicationsData {
 	allergies?: string[]
 }
 
-export interface PatientVitalsData extends VitalSigns {
-	chiefComplaint?: string
-	currentSymptoms?: string[]
-}
-
 export interface PatientWizardData
 	extends PatientDemographicsData,
 		PatientMedicalHistoryData,
-		PatientMedicationsData,
-		PatientVitalsData {}
+		PatientMedicationsData {}
 
-export type WizardStep = 1 | 2 | 3 | 4 | 5
+export type WizardStep = 1 | 2 | 3 | 4
 
 export interface WizardStepConfig {
 	id: WizardStep
@@ -57,6 +42,9 @@ export interface Patient {
 	name: string
 	dateOfBirth: Date | string
 	gender: Gender
+	weight: number | null
+	height: number | null
+	bloodType: string | null
 	medicalHistory: string | null
 	currentMedications: string[]
 	allergies: string[]
@@ -85,6 +73,9 @@ export interface CreatePatientInput {
 	name: string
 	dateOfBirth: string
 	gender: Gender
+	weight?: number
+	height?: number
+	bloodType?: BloodType
 	medicalHistory?: string
 	currentMedications?: string[]
 	allergies?: string[]

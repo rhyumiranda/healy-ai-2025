@@ -32,3 +32,4 @@ export const config = {
 		'/api/ai/:path*',
 	],
 }
+

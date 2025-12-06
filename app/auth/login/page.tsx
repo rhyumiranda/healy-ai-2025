@@ -75,7 +75,7 @@ function LoginContent() {
 						<CardHeader className="space-y-1">
 							<CardTitle className="text-2xl">Sign in</CardTitle>
 							<CardDescription>
-								Access your MedAssist AI account
+								Access your HealyAI account
 							</CardDescription>
 						</CardHeader>
 						<CardContent>

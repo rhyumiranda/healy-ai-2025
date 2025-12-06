@@ -20,10 +20,10 @@ export function Footer() {
 						<div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
 							<Shield className="w-5 h-5 text-white" />
 						</div>
-						<span className="text-lg font-semibold text-slate-900">MedAssist AI</span>
+						<span className="text-lg font-semibold text-slate-900">HealyAI</span>
 					</div>
 					<p className="text-sm text-slate-600">
-						© 2025 MedAssist AI. All rights reserved.
+						© 2025 HealyAI. All rights reserved.
 					</p>
 					<div className="flex items-center gap-6 text-sm text-slate-600">
 						{FOOTER_LINKS.map((link, index) => (

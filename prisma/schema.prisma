@@ -1,163 +1,223 @@
 generator client {
-	provider = "prisma-client-js"
-	output   = "../lib/generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
 }
 
 datasource db {
-	provider = "postgresql"
-	url      = env("DATABASE_URL")
-	directUrl = env("DIRECT_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-	id            String    @id @default(cuid())
-	name          String?
-	email         String    @unique
-	emailVerified DateTime?
-	password      String?
-	image         String?
-	createdAt     DateTime  @default(now())
-	updatedAt     DateTime  @updatedAt
-	
-	accounts       Account[]
-	sessions       Session[]
-	doctorProfile  DoctorProfile?
-	patients       Patient[]
-	treatmentPlans TreatmentPlan[]
-	
-	@@map("users")
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  emailVerified  DateTime?
+  password       String?
+  image          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  accounts       Account[]
+  doctorProfile  DoctorProfile?
+  patients       Patient[]
+  sessions       Session[]
+  treatmentPlans TreatmentPlan[]
+
+  @@map("users")
 }
 
 model Account {
-	id                String  @id @default(cuid())
-	userId            String
-	type              String
-	provider          String
-	providerAccountId String
-	refresh_token     String?
-	access_token      String?
-	expires_at        Int?
-	token_type        String?
-	scope             String?
-	id_token          String?
-	session_state     String?
-	
-	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-	
-	@@unique([provider, providerAccountId])
-	@@map("accounts")
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model Session {
-	id           String   @id @default(cuid())
-	sessionToken String   @unique
-	userId       String
-	expires      DateTime
-	user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-	
-	@@map("sessions")
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
 model VerificationToken {
-	identifier String
-	token      String   @unique
-	expires    DateTime
-	
-	@@unique([identifier, token])
-	@@map("verification_tokens")
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model DoctorProfile {
-	id                    String   @id @default(cuid())
-	userId                String   @unique
-	user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-	
-	fullName              String
-	medicalLicenseNumber  String   @unique
-	specialty             String
-	phoneNumber           String
-	isVerified            Boolean  @default(false)
-	
-	createdAt             DateTime @default(now())
-	updatedAt             DateTime @updatedAt
-	
-	@@map("doctor_profiles")
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  fullName             String
+  medicalLicenseNumber String   @unique
+  specialty            String
+  phoneNumber          String
+  isVerified           Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_profiles")
 }
 
 model Patient {
-	id                 String   @id @default(cuid())
-	doctorId           String
-	doctor             User     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-	
-	name               String
-	dateOfBirth        DateTime
-	gender             Gender
-	medicalHistory     String?
-	currentMedications String[] @default([])
-	allergies          String[] @default([])
-	chronicConditions  String[] @default([])
-	
-	createdAt          DateTime @default(now())
-	updatedAt          DateTime @updatedAt
-	
-	treatmentPlans     TreatmentPlan[]
-	
-	@@index([doctorId])
-	@@map("patients")
+  id                 String          @id @default(cuid())
+  doctorId           String
+  name               String
+  dateOfBirth        DateTime
+  gender             Gender
+  medicalHistory     String?
+  currentMedications String[]        @default([])
+  allergies          String[]        @default([])
+  chronicConditions  String[]        @default([])
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  bloodType          String?
+  height             Float?
+  weight             Float?
+  doctor             User            @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  treatmentPlans     TreatmentPlan[]
+
+  @@index([doctorId])
+  @@map("patients")
 }
 
 model TreatmentPlan {
-	id                  String     @id @default(cuid())
-	patientId           String
-	patient             Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
-	doctorId            String
-	doctor              User       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-	
-	chiefComplaint      String
-	currentSymptoms     String
-	vitalSigns          Json?
-	physicalExamNotes   String?
-	
-	aiRecommendations   Json?
-	finalPlan           Json?
-	
-	riskLevel           RiskLevel?
-	riskFactors         String[]   @default([])
-	riskJustification   String?
-	
-	drugInteractions    Json[]     @default([])
-	contraindications   Json[]     @default([])
-	alternatives        Json[]     @default([])
-	
-	status              PlanStatus @default(DRAFT)
-	wasModified         Boolean    @default(false)
-	modificationNotes   String?
-	
-	createdAt           DateTime   @default(now())
-	updatedAt           DateTime   @updatedAt
-	approvedAt          DateTime?
-	
-	@@index([patientId])
-	@@index([doctorId])
-	@@index([status])
-	@@index([createdAt])
-	@@map("treatment_plans")
+  id                String     @id @default(cuid())
+  patientId         String
+  doctorId          String
+  chiefComplaint    String
+  currentSymptoms   String
+  vitalSigns        Json?
+  physicalExamNotes String?
+  aiRecommendations Json?
+  finalPlan         Json?
+  riskLevel         RiskLevel?
+  riskFactors       String[]   @default([])
+  riskJustification String?
+  drugInteractions  Json[]     @default([])
+  contraindications Json[]     @default([])
+  alternatives      Json[]     @default([])
+  status            PlanStatus @default(DRAFT)
+  wasModified       Boolean    @default(false)
+  modificationNotes String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  approvedAt        DateTime?
+  doctor            User       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patient           Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("treatment_plans")
+}
+
+model MedicalKnowledgeEmbedding {
+  id                String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content           String
+  sourceType        String                 @map("source_type")
+  sourceId          String?                @map("source_id")
+  sourceName        String                 @map("source_name")
+  metadata          Json                   @default("{}")
+  severityRelevance String[]               @default([]) @map("severity_relevance")
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  embedding         Unsupported("vector")?
+
+  @@index([sourceType])
+  @@index([sourceId])
+  @@index([sourceId], map: "idx_medical_embeddings_source_id")
+  @@index([sourceType], map: "idx_medical_embeddings_source_type")
+  @@index([embedding], map: "idx_medical_embeddings_vector")
+  @@map("medical_knowledge_embeddings")
+}
+
+model SevereCondition {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conditionName       String   @map("condition_name")
+  keywords            String[] @default([])
+  vitalThresholds     Json     @default("{}") @map("vital_thresholds")
+  riskCategory        String   @map("risk_category")
+  requiredValidations String[] @default([]) @map("required_validations")
+  autoEscalate        Boolean  @default(false) @map("auto_escalate")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([riskCategory])
+  @@index([riskCategory], map: "idx_severe_conditions_risk_category")
+  @@map("severe_conditions")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  timestamp    DateTime @default(now())
+  eventType    String   @map("event_type")
+  severity     String   @default("info")
+  userId       String?  @map("user_id")
+  sessionId    String?  @map("session_id")
+  patientId    String?  @map("patient_id")
+  resourceType String?  @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  action       String
+  details      Json     @default("{}")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  success      Boolean  @default(true)
+  errorMessage String?  @map("error_message")
+  durationMs   Int?     @map("duration_ms")
+  phiAccessed  Boolean  @default(false) @map("phi_accessed")
+  phiFields    String[] @default([]) @map("phi_fields")
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([patientId])
+  @@map("audit_logs")
 }
 
 enum Gender {
-	MALE
-	FEMALE
-	OTHER
+  MALE
+  FEMALE
+  OTHER
 }
 
 enum RiskLevel {
-	LOW
-	MEDIUM
-	HIGH
+  LOW
+  MEDIUM
+  HIGH
 }
 
 enum PlanStatus {
-	DRAFT
-	APPROVED
-	REJECTED
+  DRAFT
+  APPROVED
+  REJECTED
+}
+
+enum SeverityRiskCategory {
+  LIFE_THREATENING
+  URGENT
+  HIGH_RISK
+  STANDARD
 }

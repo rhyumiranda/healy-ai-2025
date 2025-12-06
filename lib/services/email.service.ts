@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY 
+	? new Resend(process.env.RESEND_API_KEY) 
+	: null
 const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
 
 interface SendVerificationEmailParams {
@@ -15,13 +17,22 @@ export class EmailService {
 		name,
 		token,
 	}: SendVerificationEmailParams): Promise<void> {
+		if (!resend) {
+			console.error('❌ Resend client not initialized. Check RESEND_API_KEY environment variable.')
+			throw new Error('Email service not configured')
+		}
+
 		const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}`
 
+		console.log('📧 Attempting to send verification email to:', email)
+		console.log('🔗 Verification URL:', verificationUrl)
+		console.log('📤 From email:', FROM_EMAIL)
+
 		try {
-			await resend.emails.send({
+			const result = await resend.emails.send({
 				from: FROM_EMAIL,
 				to: email,
-				subject: 'Verify your MedAssist AI account',
+				subject: 'Verify your HealyAI account',
 				html: `
 					<!DOCTYPE html>
 					<html>
@@ -32,13 +43,13 @@ export class EmailService {
 						</head>
 						<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
 							<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
-								<h1 style="color: white; margin: 0; font-size: 28px;">Welcome to MedAssist AI</h1>
+								<h1 style="color: white; margin: 0; font-size: 28px;">Welcome to HealyAI</h1>
 							</div>
 							
 							<div style="background: #ffffff; padding: 40px; border: 1px solid #e1e8ed; border-top: none; border-radius: 0 0 10px 10px;">
 								<p style="font-size: 18px; margin-bottom: 20px;">Hello Dr. ${name},</p>
 								
-								<p style="font-size: 16px; margin-bottom: 25px;">Thank you for registering with MedAssist AI. Please verify your email address to complete your account setup and start using our AI-powered treatment planning assistant.</p>
+								<p style="font-size: 16px; margin-bottom: 25px;">Thank you for registering with HealyAI. Please verify your email address to complete your account setup and start using our AI-powered treatment planning assistant.</p>
 								
 								<div style="text-align: center; margin: 35px 0;">
 									<a href="${verificationUrl}" 
@@ -65,37 +76,48 @@ export class EmailService {
 								</p>
 								
 								<p style="font-size: 14px; color: #666; margin-top: 20px;">
-									If you didn&apos;t create an account with MedAssist AI, please ignore this email.
+									If you didn&apos;t create an account with HealyAI, please ignore this email.
 								</p>
 							</div>
 							
 							<div style="text-align: center; margin-top: 30px; padding: 20px; color: #666; font-size: 12px;">
-								<p>MedAssist AI - AI-Powered Treatment Planning Assistant</p>
-								<p>&copy; ${new Date().getFullYear()} MedAssist AI. All rights reserved.</p>
+								<p>HealyAI - AI-Powered Treatment Planning Assistant</p>
+								<p>&copy; ${new Date().getFullYear()} HealyAI. All rights reserved.</p>
 							</div>
 						</body>
 					</html>
 				`,
 			})
+			console.log('✅ Verification email sent successfully:', result)
 		} catch (error) {
-			console.error('Failed to send verification email:', error)
+			console.error('❌ Failed to send verification email:', error)
+			if (error instanceof Error) {
+				console.error('Error details:', error.message)
+			}
 			throw new Error('Failed to send verification email')
 		}
 	}
 
 	static async sendWelcomeEmail(email: string, name: string): Promise<void> {
+		if (!resend) {
+			console.warn('⚠️ Resend client not initialized. Welcome email not sent.')
+			return
+		}
+
+		console.log('📧 Sending welcome email to:', email)
+
 		try {
-			await resend.emails.send({
+			const result = await resend.emails.send({
 				from: FROM_EMAIL,
 				to: email,
-				subject: 'Welcome to MedAssist AI!',
+				subject: 'Welcome to HealyAI!',
 				html: `
 					<!DOCTYPE html>
 					<html>
 						<head>
 							<meta charset="utf-8">
 							<meta name="viewport" content="width=device-width, initial-scale=1.0">
-							<title>Welcome to MedAssist AI</title>
+							<title>Welcome to HealyAI</title>
 						</head>
 						<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
 							<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -105,7 +127,7 @@ export class EmailService {
 							<div style="background: #ffffff; padding: 40px; border: 1px solid #e1e8ed; border-top: none; border-radius: 0 0 10px 10px;">
 								<p style="font-size: 16px; margin-bottom: 25px;">Your email has been successfully verified!</p>
 								
-								<p style="font-size: 16px; margin-bottom: 25px;">You now have full access to MedAssist AI&apos;s powerful features:</p>
+								<p style="font-size: 16px; margin-bottom: 25px;">You now have full access to HealyAI&apos;s powerful features:</p>
 								
 								<ul style="font-size: 15px; line-height: 2; margin-bottom: 30px;">
 									<li>📋 Create and manage patient profiles</li>
@@ -136,15 +158,19 @@ export class EmailService {
 							</div>
 							
 							<div style="text-align: center; margin-top: 30px; padding: 20px; color: #666; font-size: 12px;">
-								<p>MedAssist AI - AI-Powered Treatment Planning Assistant</p>
-								<p>&copy; ${new Date().getFullYear()} MedAssist AI. All rights reserved.</p>
+								<p>HealyAI - AI-Powered Treatment Planning Assistant</p>
+								<p>&copy; ${new Date().getFullYear()} HealyAI. All rights reserved.</p>
 							</div>
 						</body>
 					</html>
 				`,
 			})
+			console.log('✅ Welcome email sent successfully:', result)
 		} catch (error) {
-			console.error('Failed to send welcome email:', error)
+			console.error('❌ Failed to send welcome email:', error)
+			if (error instanceof Error) {
+				console.error('Error details:', error.message)
+			}
 		}
 	}
 }

@@ -19,7 +19,7 @@ The `AppHeader` component in `src/modules/common/components/app-header.tsx` serv
 
 #### Visual Identity
 ```
-Logo: Shield icon (blue-600) + "MedAssist AI" text
+Logo: Shield icon (blue-600) + "HealyAI" text
 Size: 8x8 icon, text-lg font-semibold
 Color Scheme: blue-600 primary, slate-900 text, slate-600 secondary
 ```

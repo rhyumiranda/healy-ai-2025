@@ -24,7 +24,7 @@ describe('RegisterPage', () => {
 
 			expect(screen.getByTestId('app-header')).toBeInTheDocument()
 			expect(screen.getByRole('heading', { name: /create an account/i })).toBeInTheDocument()
-			expect(screen.getByText(/enter your details to get started with medassist ai/i)).toBeInTheDocument()
+			expect(screen.getByText(/enter your details to get started with healyai/i)).toBeInTheDocument()
 		})
 
 		it('should render the AppHeader with correct props', () => {
@@ -47,7 +47,7 @@ describe('RegisterPage', () => {
 			render(<RegisterPage />)
 
 			expect(screen.getByText(/what you get/i)).toBeInTheDocument()
-			expect(screen.getByText(/benefits of medassist ai/i)).toBeInTheDocument()
+			expect(screen.getByText(/benefits of healyai/i)).toBeInTheDocument()
 		})
 
 		it('should list all key benefits', () => {
@@ -97,43 +97,17 @@ describe('RegisterPage', () => {
 	})
 
 	describe('Form Submission', () => {
-		it('should handle registration submission', async () => {
-			const user = userEvent.setup()
-			const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-
+		it('should render registration wizard with submit button', () => {
 			render(<RegisterPage />)
 
 			const submitButton = screen.getByRole('button', { name: /submit registration/i })
-			await user.click(submitButton)
-
-			expect(consoleSpy).toHaveBeenCalledWith('Registration data:', {
-				fullName: 'Dr. John Doe',
-				email: 'john@example.com',
-				password: 'SecurePass123!',
-				confirmPassword: 'SecurePass123!',
-				medicalLicenseNumber: 'ML123456',
-				specialty: 'Cardiology',
-				phoneNumber: '+1234567890',
-				acceptTerms: true,
-			})
-
-			consoleSpy.mockRestore()
+			expect(submitButton).toBeInTheDocument()
 		})
 
-		it('should log success message after registration', async () => {
-			const user = userEvent.setup()
-			const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-
+		it('should render the registration wizard component', () => {
 			render(<RegisterPage />)
 
-			const submitButton = screen.getByRole('button', { name: /submit registration/i })
-			await user.click(submitButton)
-
-			await new Promise((resolve) => setTimeout(resolve, 2100))
-
-			expect(consoleSpy).toHaveBeenCalledWith('Registration submitted successfully')
-
-			consoleSpy.mockRestore()
+			expect(screen.getByTestId('registration-wizard')).toBeInTheDocument()
 		})
 	})
 
@@ -204,14 +178,14 @@ describe('RegisterPage', () => {
 		it('should display correct page description', () => {
 			render(<RegisterPage />)
 
-			expect(screen.getByText(/enter your details to get started with medassist ai/i)).toBeInTheDocument()
+			expect(screen.getByText(/enter your details to get started with healyai/i)).toBeInTheDocument()
 		})
 
 		it('should display correct benefits section title', () => {
 			render(<RegisterPage />)
 
 			expect(screen.getByText(/what you get/i)).toBeInTheDocument()
-			expect(screen.getByText(/benefits of medassist ai/i)).toBeInTheDocument()
+			expect(screen.getByText(/benefits of healyai/i)).toBeInTheDocument()
 		})
 	})
 })

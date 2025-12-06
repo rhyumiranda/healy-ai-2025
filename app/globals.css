@@ -44,13 +44,13 @@
   --animate-aurora: aurora 60s ease-in-out infinite;
 }
 
-@keyframes aurora {
+  @keyframes aurora {
   0% {
     background-position: 0% 50%;
-  }
+    }
   50% {
     background-position: 100% 50%;
-  }
+    }
   100% {
     background-position: 0% 50%;
   }
@@ -136,4 +136,101 @@
 
 .animate-aurora {
   animation: aurora 60s ease-in-out infinite;
+}
+
+@keyframes ai-sparkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: scale(1.1) rotate(5deg);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(0.95) rotate(-3deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1.05) rotate(3deg);
+    opacity: 0.85;
+  }
+}
+
+@keyframes ai-sparkle-delayed {
+  0%, 100% {
+    transform: scale(1.1) rotate(0deg);
+    opacity: 0.4;
+  }
+  25% {
+    transform: scale(0.9) rotate(-5deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15) rotate(3deg);
+    opacity: 0.3;
+  }
+  75% {
+    transform: scale(0.95) rotate(-3deg);
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-slow-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-ai-sparkle {
+  animation: ai-sparkle 2s ease-in-out infinite;
+}
+
+.animate-ai-sparkle-delayed {
+  animation: ai-sparkle-delayed 2s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.animate-spin-slow-reverse {
+  animation: spin-slow-reverse 6s linear infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
 }

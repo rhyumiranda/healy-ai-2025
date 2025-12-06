@@ -48,7 +48,7 @@ export function AppHeader({
 								<Shield className="w-5 h-5 text-white" />
 							</div>
 							<span className="text-lg font-semibold text-slate-900">
-								MedAssist AI
+								HealyAI
 							</span>
 						</Link>
 					</motion.div>

@@ -170,6 +170,33 @@ model SevereCondition {
   @@map("severe_conditions")
 }
 
+model AuditLog {
+  id           String   @id @default(cuid())
+  timestamp    DateTime @default(now())
+  eventType    String   @map("event_type")
+  severity     String   @default("info")
+  userId       String?  @map("user_id")
+  sessionId    String?  @map("session_id")
+  patientId    String?  @map("patient_id")
+  resourceType String?  @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  action       String
+  details      Json     @default("{}")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  success      Boolean  @default(true)
+  errorMessage String?  @map("error_message")
+  durationMs   Int?     @map("duration_ms")
+  phiAccessed  Boolean  @default(false) @map("phi_accessed")
+  phiFields    String[] @default([]) @map("phi_fields")
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([patientId])
+  @@map("audit_logs")
+}
+
 enum Gender {
   MALE
   FEMALE

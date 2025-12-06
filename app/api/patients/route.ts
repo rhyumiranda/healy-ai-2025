@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { AuditService } from '@/lib/services/audit.service'
 
 const createPatientSchema = z.object({
 	name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -18,6 +19,7 @@ const createPatientSchema = z.object({
 })
 
 export async function GET(req: Request) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 
@@ -61,6 +63,12 @@ export async function GET(req: Request) {
 			prisma.patient.count({ where }),
 		])
 
+		await AuditService.logPatientAccess('list', {
+			userId: session.user.id,
+			success: true,
+			durationMs: Date.now() - startTime,
+		}).catch(console.error)
+
 		return NextResponse.json({
 			patients,
 			total,
@@ -78,6 +86,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 
@@ -100,6 +109,14 @@ export async function POST(req: Request) {
 			},
 		})
 
+		await AuditService.logPatientAccess('create', {
+			userId: session.user.id,
+			patientId: patient.id,
+			success: true,
+			fieldsAccessed: ['name', 'dateOfBirth', 'gender', 'medicalHistory'],
+			durationMs: Date.now() - startTime,
+		}).catch(console.error)
+
 		return NextResponse.json({ patient }, { status: 201 })
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -116,4 +133,3 @@ export async function POST(req: Request) {
 		)
 	}
 }
-

@@ -1,15 +1,23 @@
 import { prisma } from '@/lib/prisma'
-import { v4 as uuidv4 } from 'uuid'
+import { AuditLog, Prisma } from '@/lib/generated/prisma'
 
 export type AuditEventType =
+	| 'login'
+	| 'logout'
+	| 'login_failed'
 	| 'ai_request'
 	| 'ai_response'
+	| 'ai_analysis'
 	| 'patient_access'
 	| 'patient_create'
 	| 'patient_update'
 	| 'patient_delete'
+	| 'patient_list'
+	| 'profile_view'
+	| 'treatment_plan_view'
 	| 'treatment_plan_create'
 	| 'treatment_plan_update'
+	| 'treatment_plan_delete'
 	| 'treatment_plan_approve'
 	| 'treatment_plan_reject'
 	| 'phi_access'
@@ -29,18 +37,18 @@ export interface AuditLogEntry {
 	timestamp: Date
 	eventType: AuditEventType
 	severity: AuditSeverity
-	userId?: string
-	sessionId?: string
-	patientId?: string
-	resourceType?: string
-	resourceId?: string
+	userId?: string | null
+	sessionId?: string | null
+	patientId?: string | null
+	resourceType?: string | null
+	resourceId?: string | null
 	action: string
 	details: Record<string, unknown>
-	ipAddress?: string
-	userAgent?: string
+	ipAddress?: string | null
+	userAgent?: string | null
 	success: boolean
-	errorMessage?: string
-	durationMs?: number
+	errorMessage?: string | null
+	durationMs?: number | null
 	phiAccessed: boolean
 	phiFields?: string[]
 }
@@ -72,52 +80,56 @@ export interface AuditSearchOptions {
 	offset?: number
 }
 
-const IN_MEMORY_LOGS: AuditLogEntry[] = []
-const MAX_IN_MEMORY_LOGS = 10000
+function mapDbToEntry(log: AuditLog): AuditLogEntry {
+	return {
+		id: log.id,
+		timestamp: log.timestamp,
+		eventType: log.eventType as AuditEventType,
+		severity: log.severity as AuditSeverity,
+		userId: log.userId,
+		sessionId: log.sessionId,
+		patientId: log.patientId,
+		resourceType: log.resourceType,
+		resourceId: log.resourceId,
+		action: log.action,
+		details: log.details as Record<string, unknown>,
+		ipAddress: log.ipAddress,
+		userAgent: log.userAgent,
+		success: log.success,
+		errorMessage: log.errorMessage,
+		durationMs: log.durationMs,
+		phiAccessed: log.phiAccessed,
+		phiFields: log.phiFields,
+	}
+}
 
 export class AuditService {
-	private static async persistToDatabase(entry: AuditLogEntry): Promise<void> {
+	private static async persistToDatabase(entry: Omit<AuditLogEntry, 'id'>): Promise<AuditLog> {
 		try {
-			await prisma.$executeRawUnsafe(`
-				INSERT INTO audit_logs (
-					id, timestamp, event_type, severity, user_id, session_id,
-					patient_id, resource_type, resource_id, action, details,
-					ip_address, user_agent, success, error_message, duration_ms,
-					phi_accessed, phi_fields
-				) VALUES (
-					$1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb,
-					$12, $13, $14, $15, $16, $17, $18::text[]
-				)
-			`,
-				entry.id,
-				entry.timestamp,
-				entry.eventType,
-				entry.severity,
-				entry.userId || null,
-				entry.sessionId || null,
-				entry.patientId || null,
-				entry.resourceType || null,
-				entry.resourceId || null,
-				entry.action,
-				JSON.stringify(entry.details),
-				entry.ipAddress || null,
-				entry.userAgent || null,
-				entry.success,
-				entry.errorMessage || null,
-				entry.durationMs || null,
-				entry.phiAccessed,
-				entry.phiFields || []
-			)
+			return await prisma.auditLog.create({
+				data: {
+					timestamp: entry.timestamp,
+					eventType: entry.eventType,
+					severity: entry.severity,
+					userId: entry.userId ?? null,
+					sessionId: entry.sessionId ?? null,
+					patientId: entry.patientId ?? null,
+					resourceType: entry.resourceType ?? null,
+					resourceId: entry.resourceId ?? null,
+					action: entry.action,
+					details: entry.details as Prisma.InputJsonValue,
+					ipAddress: entry.ipAddress ?? null,
+					userAgent: entry.userAgent ?? null,
+					success: entry.success,
+					errorMessage: entry.errorMessage ?? null,
+					durationMs: entry.durationMs ?? null,
+					phiAccessed: entry.phiAccessed,
+					phiFields: entry.phiFields ?? [],
+				},
+			})
 		} catch (error) {
 			console.error('Failed to persist audit log to database:', error)
-			this.storeInMemory(entry)
-		}
-	}
-
-	private static storeInMemory(entry: AuditLogEntry): void {
-		IN_MEMORY_LOGS.push(entry)
-		if (IN_MEMORY_LOGS.length > MAX_IN_MEMORY_LOGS) {
-			IN_MEMORY_LOGS.shift()
+			throw error
 		}
 	}
 
@@ -141,8 +153,7 @@ export class AuditService {
 			severity?: AuditSeverity
 		} = {}
 	): Promise<string> {
-		const entry: AuditLogEntry = {
-			id: uuidv4(),
+		const entry: Omit<AuditLogEntry, 'id'> = {
 			timestamp: new Date(),
 			eventType,
 			severity: options.severity || this.determineSeverity(eventType, options.success ?? true),
@@ -162,20 +173,76 @@ export class AuditService {
 			phiFields: options.phiFields,
 		}
 
-		this.storeInMemory(entry)
-
-		await this.persistToDatabase(entry)
+		const dbEntry = await this.persistToDatabase(entry)
 
 		if (entry.severity === 'critical' || entry.severity === 'error') {
 			console.error(`[AUDIT ${entry.severity.toUpperCase()}] ${entry.eventType}: ${entry.action}`, {
-				id: entry.id,
+				id: dbEntry.id,
 				userId: entry.userId,
 				patientId: entry.patientId,
 				error: entry.errorMessage,
 			})
 		}
 
-		return entry.id
+		return dbEntry.id
+	}
+
+	static async logLogin(options: {
+		userId: string
+		email: string
+		ipAddress?: string
+		userAgent?: string
+		success?: boolean
+		errorMessage?: string
+	}): Promise<string> {
+		const eventType: AuditEventType = options.success === false ? 'login_failed' : 'login'
+		return this.log(eventType, options.success === false ? 'Login failed' : 'User logged in', {
+			userId: options.userId,
+			details: {
+				email: options.email,
+			},
+			ipAddress: options.ipAddress,
+			userAgent: options.userAgent,
+			success: options.success ?? true,
+			errorMessage: options.errorMessage,
+			severity: options.success === false ? 'warning' : 'info',
+		})
+	}
+
+	static async logLogout(options: {
+		userId: string
+		email?: string
+		ipAddress?: string
+		userAgent?: string
+	}): Promise<string> {
+		return this.log('logout', 'User logged out', {
+			userId: options.userId,
+			details: {
+				email: options.email,
+			},
+			ipAddress: options.ipAddress,
+			userAgent: options.userAgent,
+			success: true,
+		})
+	}
+
+	static async logProfileView(options: {
+		userId: string
+		viewedUserId: string
+		sessionId?: string
+		ipAddress?: string
+	}): Promise<string> {
+		return this.log('profile_view', 'Profile viewed', {
+			userId: options.userId,
+			sessionId: options.sessionId,
+			resourceType: 'user_profile',
+			resourceId: options.viewedUserId,
+			details: {
+				viewedUserId: options.viewedUserId,
+			},
+			ipAddress: options.ipAddress,
+			success: true,
+		})
 	}
 
 	static async logAIInteraction(
@@ -219,11 +286,36 @@ export class AuditService {
 		})
 	}
 
+	static async logAIAnalysis(options: {
+		userId: string
+		patientId: string
+		sessionId?: string
+		analysisType: string
+		durationMs?: number
+		success?: boolean
+		errorMessage?: string
+	}): Promise<string> {
+		return this.log('ai_analysis', `AI analysis: ${options.analysisType}`, {
+			userId: options.userId,
+			sessionId: options.sessionId,
+			patientId: options.patientId,
+			resourceType: 'ai_analysis',
+			details: {
+				analysisType: options.analysisType,
+			},
+			durationMs: options.durationMs,
+			success: options.success ?? true,
+			errorMessage: options.errorMessage,
+			phiAccessed: true,
+			phiFields: ['patient_data', 'symptoms', 'medical_history'],
+		})
+	}
+
 	static async logPatientAccess(
-		action: 'view' | 'create' | 'update' | 'delete',
+		action: 'view' | 'create' | 'update' | 'delete' | 'list',
 		options: {
 			userId: string
-			patientId: string
+			patientId?: string
 			sessionId?: string
 			ipAddress?: string
 			fieldsAccessed?: string[]
@@ -236,6 +328,7 @@ export class AuditService {
 			create: 'patient_create',
 			update: 'patient_update',
 			delete: 'patient_delete',
+			list: 'patient_list',
 		}
 
 		return this.log(eventTypeMap[action], `Patient ${action}`, {
@@ -251,13 +344,13 @@ export class AuditService {
 			ipAddress: options.ipAddress,
 			success: options.success ?? true,
 			errorMessage: options.errorMessage,
-			phiAccessed: true,
+			phiAccessed: action !== 'list',
 			phiFields: options.fieldsAccessed || ['patient_record'],
 		})
 	}
 
 	static async logTreatmentPlanAction(
-		action: 'create' | 'update' | 'approve' | 'reject',
+		action: 'view' | 'create' | 'update' | 'delete' | 'approve' | 'reject',
 		options: {
 			userId: string
 			patientId: string
@@ -270,8 +363,10 @@ export class AuditService {
 		}
 	): Promise<string> {
 		const eventTypeMap: Record<string, AuditEventType> = {
+			view: 'treatment_plan_view',
 			create: 'treatment_plan_create',
 			update: 'treatment_plan_update',
+			delete: 'treatment_plan_delete',
 			approve: 'treatment_plan_approve',
 			reject: 'treatment_plan_reject',
 		}
@@ -360,38 +455,49 @@ export class AuditService {
 			offset = 0,
 		} = options
 
-		let filtered = [...IN_MEMORY_LOGS]
+		const where: Prisma.AuditLogWhereInput = {}
 
 		if (options.userId) {
-			filtered = filtered.filter(l => l.userId === options.userId)
+			where.userId = options.userId
 		}
 		if (options.patientId) {
-			filtered = filtered.filter(l => l.patientId === options.patientId)
+			where.patientId = options.patientId
 		}
 		if (options.eventTypes && options.eventTypes.length > 0) {
-			filtered = filtered.filter(l => options.eventTypes!.includes(l.eventType))
+			where.eventType = { in: options.eventTypes }
 		}
 		if (options.severity && options.severity.length > 0) {
-			filtered = filtered.filter(l => options.severity!.includes(l.severity))
+			where.severity = { in: options.severity }
 		}
-		if (options.startDate) {
-			filtered = filtered.filter(l => l.timestamp >= options.startDate!)
-		}
-		if (options.endDate) {
-			filtered = filtered.filter(l => l.timestamp <= options.endDate!)
+		if (options.startDate || options.endDate) {
+			where.timestamp = {}
+			if (options.startDate) {
+				where.timestamp.gte = options.startDate
+			}
+			if (options.endDate) {
+				where.timestamp.lte = options.endDate
+			}
 		}
 		if (options.success !== undefined) {
-			filtered = filtered.filter(l => l.success === options.success)
+			where.success = options.success
 		}
 		if (options.phiAccessed !== undefined) {
-			filtered = filtered.filter(l => l.phiAccessed === options.phiAccessed)
+			where.phiAccessed = options.phiAccessed
 		}
 
-		filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+		const [logs, total] = await Promise.all([
+			prisma.auditLog.findMany({
+				where,
+				orderBy: { timestamp: 'desc' },
+				skip: offset,
+				take: limit,
+			}),
+			prisma.auditLog.count({ where }),
+		])
 
 		return {
-			logs: filtered.slice(offset, offset + limit),
-			total: filtered.length,
+			logs: logs.map(mapDbToEntry),
+			total,
 		}
 	}
 
@@ -401,24 +507,29 @@ export class AuditService {
 		userId?: string
 	} = {}): Promise<{
 		totalEvents: number
-		eventsByType: Record<AuditEventType, number>
-		eventsBySeverity: Record<AuditSeverity, number>
+		eventsByType: Record<string, number>
+		eventsBySeverity: Record<string, number>
 		successRate: number
 		phiAccessCount: number
 		aiInteractionCount: number
 		averageResponseTime: number
 	}> {
-		let filtered = [...IN_MEMORY_LOGS]
+		const where: Prisma.AuditLogWhereInput = {}
 
-		if (options.startDate) {
-			filtered = filtered.filter(l => l.timestamp >= options.startDate!)
-		}
-		if (options.endDate) {
-			filtered = filtered.filter(l => l.timestamp <= options.endDate!)
+		if (options.startDate || options.endDate) {
+			where.timestamp = {}
+			if (options.startDate) {
+				where.timestamp.gte = options.startDate
+			}
+			if (options.endDate) {
+				where.timestamp.lte = options.endDate
+			}
 		}
 		if (options.userId) {
-			filtered = filtered.filter(l => l.userId === options.userId)
+			where.userId = options.userId
 		}
+
+		const logs = await prisma.auditLog.findMany({ where })
 
 		const eventsByType: Record<string, number> = {}
 		const eventsBySeverity: Record<string, number> = {}
@@ -428,13 +539,13 @@ export class AuditService {
 		let totalResponseTime = 0
 		let responseTimeCount = 0
 
-		for (const log of filtered) {
+		for (const log of logs) {
 			eventsByType[log.eventType] = (eventsByType[log.eventType] || 0) + 1
 			eventsBySeverity[log.severity] = (eventsBySeverity[log.severity] || 0) + 1
 			
 			if (log.success) successCount++
 			if (log.phiAccessed) phiAccessCount++
-			if (log.eventType === 'ai_request' || log.eventType === 'ai_response') {
+			if (log.eventType === 'ai_request' || log.eventType === 'ai_response' || log.eventType === 'ai_analysis') {
 				aiInteractionCount++
 			}
 			if (log.durationMs) {
@@ -444,10 +555,10 @@ export class AuditService {
 		}
 
 		return {
-			totalEvents: filtered.length,
-			eventsByType: eventsByType as Record<AuditEventType, number>,
-			eventsBySeverity: eventsBySeverity as Record<AuditSeverity, number>,
-			successRate: filtered.length > 0 ? successCount / filtered.length : 1,
+			totalEvents: logs.length,
+			eventsByType,
+			eventsBySeverity,
+			successRate: logs.length > 0 ? successCount / logs.length : 1,
 			phiAccessCount,
 			aiInteractionCount,
 			averageResponseTime: responseTimeCount > 0 ? totalResponseTime / responseTimeCount : 0,
@@ -508,6 +619,7 @@ export class AuditService {
 		if (!success) {
 			if (eventType === 'authorization_failure') return 'critical'
 			if (eventType === 'safety_alert') return 'critical'
+			if (eventType === 'login_failed') return 'warning'
 			return 'error'
 		}
 
@@ -515,6 +627,7 @@ export class AuditService {
 			case 'safety_alert':
 				return 'warning'
 			case 'patient_delete':
+			case 'treatment_plan_delete':
 			case 'authorization_failure':
 				return 'warning'
 			case 'error':
@@ -524,4 +637,3 @@ export class AuditService {
 		}
 	}
 }
-

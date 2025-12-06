@@ -1,3 +1,5 @@
+'use client'
+
 import {
 	AlertTriangle,
 	Pill,
@@ -14,6 +16,7 @@ import {
 	Sparkles,
 } from 'lucide-react'
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -388,66 +391,152 @@ export function StepAIAnalysis({
 
 	if (isAnalyzing) {
 		return (
-			<Card className='overflow-hidden'>
-				<div className='absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-purple-500/5 animate-shimmer' />
-				<CardContent className='relative flex flex-col items-center justify-center py-16'>
-					<AILoadingAnimation
-						size='lg'
-						label='Analyzing Patient Data'
-						sublabel='AI is reviewing patient information, validating medications with FDA databases, and fetching clinical references...'
-					/>
-					<div className='mt-8 w-full max-w-md space-y-3'>
-						<div className='flex items-center gap-3 text-sm text-muted-foreground'>
-							<div className='h-2 w-2 rounded-full bg-violet-500 animate-pulse' />
-							<span>Reviewing patient medical history</span>
+			<AnimatePresence>
+				<motion.div
+					initial={{ opacity: 0, scale: 0.95 }}
+					animate={{ opacity: 1, scale: 1 }}
+					exit={{ opacity: 0, scale: 0.95 }}
+					transition={{ duration: 0.3 }}
+				>
+					<Card className='overflow-hidden relative'>
+						<motion.div
+							className='absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-purple-500/5'
+							animate={{
+								backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
+							}}
+							transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+						/>
+						<div className='absolute inset-0 overflow-hidden'>
+							{[...Array(20)].map((_, i) => (
+								<motion.div
+									key={i}
+									className='absolute h-1 w-1 rounded-full bg-violet-400/30'
+									style={{
+										left: `${Math.random() * 100}%`,
+										top: `${Math.random() * 100}%`,
+									}}
+									animate={{
+										y: [0, -30, 0],
+										opacity: [0, 1, 0],
+									}}
+									transition={{
+										duration: 2 + Math.random() * 2,
+										repeat: Infinity,
+										delay: Math.random() * 2,
+										ease: 'easeInOut',
+									}}
+								/>
+							))}
 						</div>
-						<div className='flex items-center gap-3 text-sm text-muted-foreground'>
-							<div className='h-2 w-2 rounded-full bg-purple-500 animate-pulse' style={{ animationDelay: '300ms' }} />
-							<span>Validating medications with FDA database</span>
-						</div>
-						<div className='flex items-center gap-3 text-sm text-muted-foreground'>
-							<div className='h-2 w-2 rounded-full bg-blue-500 animate-pulse' style={{ animationDelay: '600ms' }} />
-							<span>Fetching clinical references from PubMed</span>
-						</div>
-					</div>
-					<p className='text-xs text-muted-foreground mt-6'>
-						This may take 10-20 seconds
-					</p>
-				</CardContent>
-			</Card>
+						<CardContent className='relative flex flex-col items-center justify-center py-12'>
+							<AILoadingAnimation size='lg' />
+							<motion.p
+								className='text-xs text-muted-foreground mt-8'
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 1 }}
+							>
+								This typically takes 15-30 seconds for comprehensive analysis
+							</motion.p>
+						</CardContent>
+					</Card>
+				</motion.div>
+			</AnimatePresence>
 		)
 	}
 
 	if (!analysis) {
 		return (
-			<Card className='overflow-hidden'>
-				<CardContent className='flex flex-col items-center justify-center py-16'>
-					<div className='relative mb-6'>
-						<div className='absolute inset-0 bg-gradient-to-r from-violet-500/20 via-purple-500/20 to-blue-500/20 rounded-full blur-xl' />
-						<div className='relative bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 p-6 rounded-full'>
-							<Sparkles className='h-12 w-12 text-violet-600 dark:text-violet-400' />
-						</div>
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5 }}
+			>
+				<Card className='overflow-hidden relative'>
+					<div className='absolute inset-0 overflow-hidden'>
+						<motion.div
+							className='absolute -top-20 -right-20 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl'
+							animate={{
+								scale: [1, 1.2, 1],
+								opacity: [0.3, 0.5, 0.3],
+							}}
+							transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+						/>
+						<motion.div
+							className='absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-purple-500/10 blur-3xl'
+							animate={{
+								scale: [1.2, 1, 1.2],
+								opacity: [0.5, 0.3, 0.5],
+							}}
+							transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+						/>
 					</div>
-					<h3 className='text-lg font-medium mb-2'>Ready for AI Analysis</h3>
-					<p className='text-muted-foreground text-center mb-6 max-w-md'>
-						Click the button below to analyze the patient data and generate evidence-based
-						treatment recommendations with clinical references.
-					</p>
-					{analysisError && (
-						<div className='mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20'>
-							<p className='text-sm text-destructive'>{analysisError}</p>
-						</div>
-					)}
-					<Button
-						onClick={onRunAnalysis}
-						size='lg'
-						className='bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/25'
-					>
-						<AISparkleIcon className='mr-2' />
-						Run AI Analysis
-					</Button>
-				</CardContent>
-			</Card>
+					<CardContent className='relative flex flex-col items-center justify-center py-16'>
+						<motion.div
+							className='relative mb-6'
+							animate={{ y: [0, -8, 0] }}
+							transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+						>
+							<motion.div
+								className='absolute inset-0 bg-gradient-to-r from-violet-500/30 via-purple-500/30 to-blue-500/30 rounded-full blur-xl'
+								animate={{
+									scale: [1, 1.3, 1],
+									opacity: [0.5, 0.8, 0.5],
+								}}
+								transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+							/>
+							<div className='relative bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 p-6 rounded-full'>
+								<Sparkles className='h-12 w-12 text-violet-600 dark:text-violet-400' />
+							</div>
+						</motion.div>
+						<motion.h3
+							className='text-lg font-medium mb-2'
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ delay: 0.2 }}
+						>
+							Ready for AI Analysis
+						</motion.h3>
+						<motion.p
+							className='text-muted-foreground text-center mb-6 max-w-md'
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ delay: 0.3 }}
+						>
+							Click the button below to analyze the patient data and generate evidence-based
+							treatment recommendations with clinical references.
+						</motion.p>
+						<AnimatePresence>
+							{analysisError && (
+								<motion.div
+									initial={{ opacity: 0, height: 0 }}
+									animate={{ opacity: 1, height: 'auto' }}
+									exit={{ opacity: 0, height: 0 }}
+									className='mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20'
+								>
+									<p className='text-sm text-destructive'>{analysisError}</p>
+								</motion.div>
+							)}
+						</AnimatePresence>
+						<motion.div
+							initial={{ opacity: 0, y: 10 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: 0.4 }}
+							whileHover={{ scale: 1.02 }}
+							whileTap={{ scale: 0.98 }}
+						>
+							<Button
+								onClick={onRunAnalysis}
+								size='lg'
+								className='bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg shadow-violet-500/25 transition-all duration-300'
+							>
+								<AISparkleIcon className='mr-2' />
+								Run AI Analysis
+							</Button>
+						</motion.div>
+					</CardContent>
+				</Card>
+			</motion.div>
 		)
 	}
 

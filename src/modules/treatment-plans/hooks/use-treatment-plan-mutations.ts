@@ -23,7 +23,10 @@ export function useCreateTreatmentPlan(): UseCreateTreatmentPlanReturn {
 			setError(null)
 
 			try {
-				const plan = await TreatmentPlanService.createTreatmentPlan(input)
+				const plan = await TreatmentPlanService.createTreatmentPlan({
+					...input,
+					vitalSigns: input.vitalSigns as Record<string, unknown> | undefined,
+				})
 				toast.success('Treatment plan created successfully')
 				router.push(`/dashboard/treatment-plans/${plan.id}`)
 				return plan
@@ -60,7 +63,11 @@ export function useUpdateTreatmentPlan(): UseUpdateTreatmentPlanReturn {
 			setError(null)
 
 			try {
-				const plan = await TreatmentPlanService.updateTreatmentPlan(id, input)
+				const plan = await TreatmentPlanService.updateTreatmentPlan(id, {
+					...input,
+					vitalSigns: input.vitalSigns as Record<string, unknown> | undefined,
+					finalPlan: input.finalPlan as Record<string, unknown> | undefined,
+				})
 				toast.success('Treatment plan updated successfully')
 				return plan
 			} catch (err) {
@@ -130,15 +137,22 @@ export function useCloneTreatmentPlan(): UseCloneTreatmentPlanReturn {
 	const [error, setError] = useState<string | null>(null)
 
 	const clonePlan = useCallback(
-		async (id: string, newPatientId: string): Promise<TreatmentPlan | null> => {
+		async (id: string, _newPatientId: string): Promise<TreatmentPlan | null> => {
 			setIsLoading(true)
 			setError(null)
 
 			try {
-				const plan = await TreatmentPlanService.cloneTreatmentPlan(id, newPatientId)
+				const original = await TreatmentPlanService.getTreatmentPlan(id)
+				const cloned = await TreatmentPlanService.createTreatmentPlan({
+					patientId: _newPatientId,
+					chiefComplaint: original.chiefComplaint,
+					currentSymptoms: original.currentSymptoms || '',
+					vitalSigns: original.vitalSigns as Record<string, unknown> | undefined,
+					status: 'DRAFT',
+				})
 				toast.success('Treatment plan cloned successfully')
-				router.push(`/dashboard/treatment-plans/${plan.id}`)
-				return plan
+				router.push(`/dashboard/treatment-plans/${cloned.id}`)
+				return cloned
 			} catch (err) {
 				setError(err instanceof Error ? err.message : 'Failed to clone treatment plan')
 				return null

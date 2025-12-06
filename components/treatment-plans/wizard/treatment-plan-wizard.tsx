@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { ArrowLeft, ArrowRight, Loader2, Save, Check, Sparkles } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useTreatmentPlanWizard } from '@/src/modules/treatment-plans'
 import { WizardProgress } from './wizard-progress'
@@ -8,9 +10,11 @@ import { StepSelectPatient } from './step-select-patient'
 import { StepIntake } from './step-intake'
 import { StepAIAnalysis } from './step-ai-analysis'
 import { StepReview } from './step-review'
+import { StepTransitionLoader } from './step-transition-loader'
 import { AISparkleIcon } from '@/components/ui/ai-loading-animation'
 
 export function TreatmentPlanWizard() {
+	const [isTransitioning, setIsTransitioning] = useState(false)
 	const {
 		currentStep,
 		totalSteps,
@@ -36,7 +40,9 @@ export function TreatmentPlanWizard() {
 
 	const handleNext = async () => {
 		if (currentStep === 2 && isCurrentStepValid()) {
+			setIsTransitioning(true)
 			await runAIAnalysis()
+			setIsTransitioning(false)
 			nextStep()
 		} else if (isCurrentStepValid()) {
 			nextStep()
@@ -52,6 +58,17 @@ export function TreatmentPlanWizard() {
 	}
 
 	const renderStep = () => {
+		if (isTransitioning) {
+			return (
+				<StepTransitionLoader
+					patientName={formData.selectedPatient?.firstName
+						? `${formData.selectedPatient.firstName} ${formData.selectedPatient.lastName}`
+						: undefined
+					}
+				/>
+			)
+		}
+
 		switch (currentStep) {
 			case 1:
 				return (
@@ -105,13 +122,31 @@ export function TreatmentPlanWizard() {
 				</div>
 			)}
 
-			<div className='min-h-[400px]'>{renderStep()}</div>
+			<AnimatePresence mode='wait'>
+				<motion.div
+					key={isTransitioning ? 'transition' : currentStep}
+					initial={{ opacity: 0, y: 10 }}
+					animate={{ opacity: 1, y: 0 }}
+					exit={{ opacity: 0, y: -10 }}
+					transition={{ duration: 0.3, ease: 'easeInOut' }}
+					className='min-h-[400px]'
+				>
+					{renderStep()}
+				</motion.div>
+			</AnimatePresence>
 
-			<div className='flex justify-between pt-4 border-t'>
+			<motion.div
+				className='flex justify-between pt-4 border-t'
+				animate={{
+					opacity: isTransitioning ? 0 : 1,
+					y: isTransitioning ? 20 : 0,
+				}}
+				transition={{ duration: 0.2 }}
+			>
 				<Button
 					variant='outline'
 					onClick={prevStep}
-					disabled={isFirstStep || isLoading || isAnalyzing}
+					disabled={isFirstStep || isLoading || isAnalyzing || isTransitioning}
 				>
 					<ArrowLeft className='mr-2 h-4 w-4' />
 					Previous
@@ -147,10 +182,10 @@ export function TreatmentPlanWizard() {
 					) : (
 						<Button
 							onClick={handleNext}
-							disabled={!isCurrentStepValid() || isAnalyzing}
+							disabled={!isCurrentStepValid() || isAnalyzing || isTransitioning}
 							className={currentStep === 2 ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white' : ''}
 						>
-							{isAnalyzing ? (
+							{isAnalyzing || isTransitioning ? (
 								<>
 									<Sparkles className='mr-2 h-4 w-4 animate-ai-sparkle text-white' />
 									Analyzing...
@@ -165,7 +200,7 @@ export function TreatmentPlanWizard() {
 						</Button>
 					)}
 				</div>
-			</div>
+			</motion.div>
 		</div>
 	)
 }

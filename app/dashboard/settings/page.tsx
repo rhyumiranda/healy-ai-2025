@@ -1,6 +1,5 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -11,14 +10,63 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { User, Bell, Shield, Palette } from 'lucide-react'
+import {
+	ProfileSection,
+	NotificationsSection,
+	SecuritySection,
+	AppearanceSection,
+} from '@/components/settings'
+import {
+	useProfile,
+	useNotifications,
+	useSecurity,
+	useAppearance,
+} from '@/src/modules/settings'
 
 export default function SettingsPage() {
-	const { data: session } = useSession()
+	const {
+		profile,
+		isLoading: profileLoading,
+		isSaving: profileSaving,
+		isUploading,
+		updateProfile,
+		uploadAvatar,
+	} = useProfile()
+
+	const {
+		preferences,
+		isLoading: notificationsLoading,
+		isSaving: notificationsSaving,
+		togglePreference,
+		updatePreferences,
+	} = useNotifications()
+
+	const {
+		sessions,
+		twoFactorEnabled,
+		twoFactorSetup,
+		isLoading: securityLoading,
+		isChangingPassword,
+		isTogglingTwoFactor,
+		isLoggingOut,
+		changePassword,
+		initiate2FASetup,
+		verify2FA,
+		disable2FA,
+		cancel2FASetup,
+		logoutSession,
+		logoutAllSessions,
+	} = useSecurity()
+
+	const {
+		settings: appearanceSettings,
+		theme,
+		isLoading: appearanceLoading,
+		isSaving: appearanceSaving,
+		changeTheme,
+		toggleCompactMode,
+		changeFontSize,
+	} = useAppearance()
 
 	return (
 		<>
@@ -42,166 +90,59 @@ export default function SettingsPage() {
 					</Breadcrumb>
 				</div>
 			</header>
-			<div className='flex flex-1 flex-col gap-4 p-4 pt-0'>
-				<div className='space-y-1'>
-					<h2 className='text-3xl font-bold tracking-tight'>Settings</h2>
-					<p className='text-muted-foreground'>
+
+			<div className='flex flex-1 flex-col gap-6 p-4 pt-0'>
+				<div>
+					<h1 className='text-2xl font-semibold tracking-tight'>Settings</h1>
+					<p className='text-sm text-muted-foreground'>
 						Manage your account settings and preferences
 					</p>
 				</div>
 
 				<div className='grid gap-6'>
-					<Card>
-						<CardHeader>
-							<div className='flex items-center gap-2'>
-								<User className='h-5 w-5' />
-								<CardTitle>Profile</CardTitle>
-							</div>
-							<CardDescription>
-								Your personal information and account details
-							</CardDescription>
-						</CardHeader>
-						<CardContent className='space-y-4'>
-							<div className='grid gap-4 md:grid-cols-2'>
-								<div className='space-y-2'>
-									<Label htmlFor='name'>Full Name</Label>
-									<Input
-										id='name'
-										defaultValue={session?.user?.name || ''}
-										placeholder='Dr. John Smith'
-									/>
-								</div>
-								<div className='space-y-2'>
-									<Label htmlFor='email'>Email</Label>
-									<Input
-										id='email'
-										type='email'
-										defaultValue={session?.user?.email || ''}
-										placeholder='doctor@example.com'
-										disabled
-									/>
-								</div>
-								<div className='space-y-2'>
-									<Label htmlFor='specialty'>Specialty</Label>
-									<Input
-										id='specialty'
-										placeholder='Internal Medicine'
-									/>
-								</div>
-								<div className='space-y-2'>
-									<Label htmlFor='license'>License Number</Label>
-									<Input
-										id='license'
-										placeholder='MD-12345'
-									/>
-								</div>
-							</div>
-							<Button>Save Changes</Button>
-						</CardContent>
-					</Card>
+					<ProfileSection
+						profile={profile}
+						isLoading={profileLoading}
+						isSaving={profileSaving}
+						isUploading={isUploading}
+						onUpdate={updateProfile}
+						onUploadAvatar={uploadAvatar}
+					/>
 
-					<Card>
-						<CardHeader>
-							<div className='flex items-center gap-2'>
-								<Bell className='h-5 w-5' />
-								<CardTitle>Notifications</CardTitle>
-							</div>
-							<CardDescription>
-								Configure how you receive notifications
-							</CardDescription>
-						</CardHeader>
-						<CardContent className='space-y-4'>
-							<div className='flex items-center justify-between'>
-								<div>
-									<p className='font-medium'>Safety Alerts</p>
-									<p className='text-sm text-muted-foreground'>
-										Get notified about drug interactions and risks
-									</p>
-								</div>
-								<Button variant='outline' size='sm'>Enabled</Button>
-							</div>
-							<Separator />
-							<div className='flex items-center justify-between'>
-								<div>
-									<p className='font-medium'>Treatment Plan Updates</p>
-									<p className='text-sm text-muted-foreground'>
-										Notifications when plans are approved or modified
-									</p>
-								</div>
-								<Button variant='outline' size='sm'>Enabled</Button>
-							</div>
-							<Separator />
-							<div className='flex items-center justify-between'>
-								<div>
-									<p className='font-medium'>Email Notifications</p>
-									<p className='text-sm text-muted-foreground'>
-										Receive updates via email
-									</p>
-								</div>
-								<Button variant='ghost' size='sm'>Disabled</Button>
-							</div>
-						</CardContent>
-					</Card>
+					<NotificationsSection
+						preferences={preferences}
+						isLoading={notificationsLoading}
+						isSaving={notificationsSaving}
+						onToggle={togglePreference}
+						onFrequencyChange={(frequency) => updatePreferences({ frequency })}
+					/>
 
-					<Card>
-						<CardHeader>
-							<div className='flex items-center gap-2'>
-								<Shield className='h-5 w-5' />
-								<CardTitle>Security</CardTitle>
-							</div>
-							<CardDescription>
-								Manage your security settings
-							</CardDescription>
-						</CardHeader>
-						<CardContent className='space-y-4'>
-							<div className='flex items-center justify-between'>
-								<div>
-									<p className='font-medium'>Change Password</p>
-									<p className='text-sm text-muted-foreground'>
-										Update your account password
-									</p>
-								</div>
-								<Button variant='outline' size='sm'>Change</Button>
-							</div>
-							<Separator />
-							<div className='flex items-center justify-between'>
-								<div>
-									<p className='font-medium'>Two-Factor Authentication</p>
-									<p className='text-sm text-muted-foreground'>
-										Add an extra layer of security
-									</p>
-								</div>
-								<Button variant='outline' size='sm'>Enable</Button>
-							</div>
-						</CardContent>
-					</Card>
+					<SecuritySection
+						sessions={sessions}
+						twoFactorEnabled={twoFactorEnabled}
+						twoFactorSetup={twoFactorSetup}
+						isLoading={securityLoading}
+						isChangingPassword={isChangingPassword}
+						isTogglingTwoFactor={isTogglingTwoFactor}
+						isLoggingOut={isLoggingOut}
+						onChangePassword={changePassword}
+						onInitiate2FA={initiate2FASetup}
+						onVerify2FA={verify2FA}
+						onDisable2FA={disable2FA}
+						onCancel2FA={cancel2FASetup}
+						onLogoutSession={logoutSession}
+						onLogoutAll={logoutAllSessions}
+					/>
 
-					<Card>
-						<CardHeader>
-							<div className='flex items-center gap-2'>
-								<Palette className='h-5 w-5' />
-								<CardTitle>Appearance</CardTitle>
-							</div>
-							<CardDescription>
-								Customize the look and feel of the application
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<div className='flex items-center justify-between'>
-								<div>
-									<p className='font-medium'>Theme</p>
-									<p className='text-sm text-muted-foreground'>
-										Choose between light and dark mode
-									</p>
-								</div>
-								<div className='flex gap-2'>
-									<Button variant='outline' size='sm'>Light</Button>
-									<Button variant='outline' size='sm'>Dark</Button>
-									<Button variant='secondary' size='sm'>System</Button>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
+					<AppearanceSection
+						settings={appearanceSettings}
+						theme={theme}
+						isLoading={appearanceLoading}
+						isSaving={appearanceSaving}
+						onThemeChange={changeTheme}
+						onToggleCompactMode={toggleCompactMode}
+						onFontSizeChange={changeFontSize}
+					/>
 				</div>
 			</div>
 		</>

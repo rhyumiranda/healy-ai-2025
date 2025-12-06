@@ -1,0 +1,7 @@
+export { ProfileSection } from './profile-section'
+export { NotificationsSection } from './notifications-section'
+export { SecuritySection } from './security-section'
+export { AppearanceSection } from './appearance-section'
+export { ChangePasswordDialog } from './change-password-dialog'
+export { TwoFactorDialog } from './two-factor-dialog'
+export { ActiveSessionsList } from './active-sessions-list'

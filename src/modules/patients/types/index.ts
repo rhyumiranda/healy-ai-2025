@@ -2,6 +2,55 @@ import type { Gender, PlanStatus, RiskLevel } from '@/lib/generated/prisma'
 
 export type { Gender, PlanStatus, RiskLevel }
 
+export type BloodType = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-'
+
+export interface VitalSigns {
+	bloodPressureSystolic?: number
+	bloodPressureDiastolic?: number
+	heartRate?: number
+	temperature?: number
+	respiratoryRate?: number
+	oxygenSaturation?: number
+}
+
+export interface PatientDemographicsData {
+	name: string
+	dateOfBirth: string
+	gender: Gender
+	weight?: number
+	height?: number
+	bloodType?: BloodType
+}
+
+export interface PatientMedicalHistoryData {
+	medicalHistory?: string
+	chronicConditions?: string[]
+}
+
+export interface PatientMedicationsData {
+	currentMedications?: string[]
+	allergies?: string[]
+}
+
+export interface PatientVitalsData extends VitalSigns {
+	chiefComplaint?: string
+	currentSymptoms?: string[]
+}
+
+export interface PatientWizardData
+	extends PatientDemographicsData,
+		PatientMedicalHistoryData,
+		PatientMedicationsData,
+		PatientVitalsData {}
+
+export type WizardStep = 1 | 2 | 3 | 4 | 5
+
+export interface WizardStepConfig {
+	id: WizardStep
+	title: string
+	description: string
+}
+
 export interface Patient {
 	id: string
 	doctorId: string

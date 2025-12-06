@@ -184,11 +184,12 @@ describe('Clinical Accuracy Test Suite', () => {
 					contraindications: [],
 				}
 
-				const result = evaluateTestCase(testCase, mockResponseWithNSAID)
+				const result = evaluateTestCase(testCase, mockResponseWithNSAID, { skipSafetySimulation: true })
 
-				expect(result.failures).toContain(
-					expect.stringContaining('Ibuprofen')
+				const hasCriticalFailure = result.failures.some(f =>
+					f.includes('CRITICAL') && f.toLowerCase().includes('ibuprofen')
 				)
+				expect(hasCriticalFailure).toBe(true)
 			})
 
 			it(`${testCase.name} - Safe alternative accepted (${testCase.id})`, () => {
@@ -366,3 +367,4 @@ describe('Test Coverage Report', () => {
 		expect(allBlockedDrugs.some(d => d.toLowerCase().includes('aspirin'))).toBe(true)
 	})
 })
+

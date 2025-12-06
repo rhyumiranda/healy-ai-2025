@@ -48,7 +48,7 @@ const MOCK_SESSIONS: ActiveSession[] = [
 // Local Storage Keys
 // ============================================
 
-const APPEARANCE_STORAGE_KEY = 'medassist-appearance-settings'
+const APPEARANCE_STORAGE_KEY = 'healyai-appearance-settings'
 
 // ============================================
 // Local Storage Helpers

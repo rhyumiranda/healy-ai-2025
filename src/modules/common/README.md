@@ -19,7 +19,7 @@ src/modules/common/
 A consistent header component used across all pages, extracted from the landing page navigation. This serves as the **single source of truth** for the application's header design system.
 
 **Design System:**
-- **Logo**: Blue shield icon (8x8) with "MedAssist AI" branding
+- **Logo**: Blue shield icon (8x8) with "HealyAI" branding
 - **Colors**: 
   - Primary: `blue-600` (bg, buttons)
   - Text: `slate-900` (primary), `slate-600` (secondary)

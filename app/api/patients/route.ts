@@ -86,9 +86,7 @@ export async function POST(req: Request) {
 		}
 
 		const body = await req.json()
-		console.log('[API] Received body:', body)
 		const data = createPatientSchema.parse(body)
-		console.log('[API] Parsed data:', data)
 
 		const patient = await prisma.patient.create({
 			data: {

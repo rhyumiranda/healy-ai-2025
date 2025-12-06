@@ -197,7 +197,7 @@ describe('LoginFormModern', () => {
 
 		it('should disable form during submission', async () => {
 			const user = userEvent.setup()
-			mockOnSubmit.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 1000)))
+			mockOnSubmit.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)))
 
 			render(<LoginFormModern onSubmit={mockOnSubmit} />)
 

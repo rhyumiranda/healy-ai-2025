@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, useRef, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -54,17 +54,19 @@ export default function EditPatientPage({
 		allergies: [],
 		chronicConditions: [],
 	})
+	const hasInitialized = useRef(false)
 
 	useEffect(() => {
-		if (patient) {
+		if (patient && !hasInitialized.current) {
+			hasInitialized.current = true
 			setFormData({
 				name: patient.name,
 				dateOfBirth: new Date(patient.dateOfBirth).toISOString().split('T')[0],
 				gender: patient.gender,
 				medicalHistory: patient.medicalHistory || '',
-				currentMedications: patient.currentMedications,
-				allergies: patient.allergies,
-				chronicConditions: patient.chronicConditions,
+				currentMedications: patient.currentMedications || [],
+				allergies: patient.allergies || [],
+				chronicConditions: patient.chronicConditions || [],
 			})
 		}
 	}, [patient])
@@ -185,7 +187,15 @@ export default function EditPatientPage({
 					</div>
 				)}
 
-				<form onSubmit={handleSubmit} className='space-y-6'>
+				<form
+					onSubmit={handleSubmit}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter' && e.target instanceof HTMLInputElement && e.target.type !== 'submit') {
+							e.preventDefault()
+						}
+					}}
+					className='space-y-6'
+				>
 					<Card>
 						<CardHeader>
 							<CardTitle className='text-lg'>Basic Information</CardTitle>

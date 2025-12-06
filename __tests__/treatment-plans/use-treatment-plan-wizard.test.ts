@@ -10,8 +10,8 @@ const mockPatient = {
 	chronicConditions: ['Hypertension'],
 }
 
-jest.mock('@/lib/services/openai.service', () => ({
-	OpenAIService: {
+jest.mock('@/src/modules/treatment-plans/services/ai-analysis.service', () => ({
+	AIAnalysisService: {
 		analyzeTreatment: jest.fn().mockResolvedValue({
 			medications: [{ name: 'Test Med', dosage: '10mg', frequency: 'daily', duration: '7 days', route: 'oral' }],
 			riskLevel: 'LOW',

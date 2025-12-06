@@ -21,7 +21,7 @@ export default function RegisterPage() {
 							Create an account
 						</h1>
 						<p className='text-sm text-muted-foreground'>
-							Enter your details to get started with MedAssist AI
+							Enter your details to get started with HealyAI
 						</p>
 					</div>
 
@@ -38,7 +38,7 @@ export default function RegisterPage() {
 										<div>
 											<h3 className='text-sm font-semibold'>What you get</h3>
 											<p className='text-xs text-muted-foreground'>
-												Benefits of MedAssist AI
+												Benefits of HealyAI
 							</p>
 						</div>
 					</div>

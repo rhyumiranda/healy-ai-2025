@@ -24,7 +24,7 @@ describe('RegisterPage', () => {
 
 			expect(screen.getByTestId('app-header')).toBeInTheDocument()
 			expect(screen.getByRole('heading', { name: /create an account/i })).toBeInTheDocument()
-			expect(screen.getByText(/enter your details to get started with medassist ai/i)).toBeInTheDocument()
+			expect(screen.getByText(/enter your details to get started with healyai/i)).toBeInTheDocument()
 		})
 
 		it('should render the AppHeader with correct props', () => {
@@ -47,7 +47,7 @@ describe('RegisterPage', () => {
 			render(<RegisterPage />)
 
 			expect(screen.getByText(/what you get/i)).toBeInTheDocument()
-			expect(screen.getByText(/benefits of medassist ai/i)).toBeInTheDocument()
+			expect(screen.getByText(/benefits of healyai/i)).toBeInTheDocument()
 		})
 
 		it('should list all key benefits', () => {
@@ -178,14 +178,14 @@ describe('RegisterPage', () => {
 		it('should display correct page description', () => {
 			render(<RegisterPage />)
 
-			expect(screen.getByText(/enter your details to get started with medassist ai/i)).toBeInTheDocument()
+			expect(screen.getByText(/enter your details to get started with healyai/i)).toBeInTheDocument()
 		})
 
 		it('should display correct benefits section title', () => {
 			render(<RegisterPage />)
 
 			expect(screen.getByText(/what you get/i)).toBeInTheDocument()
-			expect(screen.getByText(/benefits of medassist ai/i)).toBeInTheDocument()
+			expect(screen.getByText(/benefits of healyai/i)).toBeInTheDocument()
 		})
 	})
 })

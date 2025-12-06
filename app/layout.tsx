@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-	title: 'MedAssist AI - Treatment Plan Assistant',
+	title: 'HealyAI - Treatment Plan Assistant',
 	description: 'AI-powered treatment plan assistant for healthcare professionals',
 }
 

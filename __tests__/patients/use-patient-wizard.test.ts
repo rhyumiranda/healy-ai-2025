@@ -30,9 +30,9 @@ describe('usePatientWizard', () => {
 			expect(result.current.formData.gender).toBe('MALE')
 		})
 
-		it('should have 5 total steps', () => {
+		it('should have 4 total steps', () => {
 			const { result } = renderHook(() => usePatientWizard())
-			expect(result.current.totalSteps).toBe(5)
+			expect(result.current.totalSteps).toBe(4)
 		})
 	})
 
@@ -87,7 +87,7 @@ describe('usePatientWizard', () => {
 			expect(result.current.currentStep).toBe(1)
 		})
 
-		it('should not exceed step 5', () => {
+		it('should not exceed step 4', () => {
 			const { result } = renderHook(() => usePatientWizard())
 
 			act(() => {
@@ -104,7 +104,7 @@ describe('usePatientWizard', () => {
 				})
 			}
 
-			expect(result.current.currentStep).toBe(5)
+			expect(result.current.currentStep).toBe(4)
 		})
 
 		it('should allow jumping to a specific step', () => {
@@ -264,7 +264,7 @@ describe('usePatientWizard', () => {
 		it('should calculate progress percentage correctly', () => {
 			const { result } = renderHook(() => usePatientWizard())
 
-			expect(result.current.progressPercentage).toBe(20)
+			expect(result.current.progressPercentage).toBe(25)
 
 			act(() => {
 				result.current.updateFormData({
@@ -278,7 +278,7 @@ describe('usePatientWizard', () => {
 				result.current.nextStep()
 			})
 
-			expect(result.current.progressPercentage).toBe(40)
+			expect(result.current.progressPercentage).toBe(50)
 		})
 
 		it('should identify first and last steps correctly', () => {
@@ -296,7 +296,7 @@ describe('usePatientWizard', () => {
 			})
 
 			act(() => {
-				result.current.goToStep(5)
+				result.current.goToStep(4)
 			})
 
 			expect(result.current.isFirstStep).toBe(false)

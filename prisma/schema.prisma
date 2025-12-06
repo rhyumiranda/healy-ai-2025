@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+	provider = "prisma-client-js"
+	output   = "../lib/generated/prisma"
 }
 
 datasource db {
@@ -92,6 +92,9 @@ model Patient {
 	name               String
 	dateOfBirth        DateTime
 	gender             Gender
+	weight             Float?
+	height             Float?
+	bloodType          String?
 	medicalHistory     String?
 	currentMedications String[] @default([])
 	allergies          String[] @default([])

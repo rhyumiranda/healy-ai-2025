@@ -205,6 +205,13 @@ export function useTreatmentPlanWizard() {
 			chiefComplaint: formData.chiefComplaint,
 			currentSymptoms: formData.currentSymptoms.join(', '),
 			vitalSigns: formData.vitalSigns,
+			aiRecommendations: formData.aiAnalysis,
+			riskLevel: formData.aiAnalysis?.riskLevel,
+			riskFactors: formData.aiAnalysis?.riskFactors,
+			riskJustification: formData.aiAnalysis?.riskJustification,
+			drugInteractions: formData.aiAnalysis?.drugInteractions,
+			contraindications: formData.aiAnalysis?.contraindications,
+			alternatives: formData.aiAnalysis?.alternatives,
 			status: 'APPROVED' as const,
 		}
 		return createTreatmentPlan(submitData)
@@ -216,6 +223,13 @@ export function useTreatmentPlanWizard() {
 			chiefComplaint: formData.chiefComplaint,
 			currentSymptoms: formData.currentSymptoms.join(', '),
 			vitalSigns: formData.vitalSigns,
+			aiRecommendations: formData.aiAnalysis,
+			riskLevel: formData.aiAnalysis?.riskLevel,
+			riskFactors: formData.aiAnalysis?.riskFactors,
+			riskJustification: formData.aiAnalysis?.riskJustification,
+			drugInteractions: formData.aiAnalysis?.drugInteractions,
+			contraindications: formData.aiAnalysis?.contraindications,
+			alternatives: formData.aiAnalysis?.alternatives,
 			status: 'DRAFT' as const,
 		}
 		return createTreatmentPlan(submitData)

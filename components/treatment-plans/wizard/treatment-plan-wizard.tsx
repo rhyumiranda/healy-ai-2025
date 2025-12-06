@@ -61,10 +61,7 @@ export function TreatmentPlanWizard() {
 		if (isTransitioning) {
 			return (
 				<StepTransitionLoader
-					patientName={formData.selectedPatient?.firstName
-						? `${formData.selectedPatient.firstName} ${formData.selectedPatient.lastName}`
-						: undefined
-					}
+					patientName={formData.selectedPatient?.name}
 				/>
 			)
 		}

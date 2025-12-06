@@ -199,6 +199,14 @@ export interface CreateTreatmentPlanInput {
 	currentSymptoms: string
 	vitalSigns?: VitalSigns
 	physicalExamNotes?: string
+	aiRecommendations?: AIAnalysisResponse
+	riskLevel?: RiskLevel
+	riskFactors?: string[]
+	riskJustification?: string
+	drugInteractions?: DrugInteraction[]
+	contraindications?: Contraindication[]
+	alternatives?: AlternativePlan[]
+	status?: PlanStatus
 }
 
 export interface UpdateTreatmentPlanInput {

@@ -3,9 +3,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { AuditService } from '@/lib/services/audit.service'
 
-// GET - List treatment plans
 export async function GET(req: Request) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 
@@ -49,6 +50,20 @@ export async function GET(req: Request) {
 			prisma.treatmentPlan.count({ where }),
 		])
 
+		await AuditService.log('treatment_plan_view', 'Treatment plans list viewed', {
+			userId: session.user.id,
+			resourceType: 'treatment_plan',
+			details: {
+				search,
+				status,
+				riskLevel,
+				resultsCount: plans.length,
+			},
+			success: true,
+			durationMs: Date.now() - startTime,
+			phiAccessed: true,
+		}).catch(console.error)
+
 		return NextResponse.json({
 			plans,
 			total,
@@ -65,7 +80,6 @@ export async function GET(req: Request) {
 	}
 }
 
-// POST - Create new treatment plan with AI analysis
 const createPlanSchema = z.object({
 	patientId: z.string(),
 	chiefComplaint: z.string().min(1),
@@ -83,6 +97,7 @@ const createPlanSchema = z.object({
 })
 
 export async function POST(req: Request) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 
@@ -93,7 +108,6 @@ export async function POST(req: Request) {
 		const body = await req.json()
 		const data = createPlanSchema.parse(body)
 
-		// Verify patient belongs to this doctor
 		const patient = await prisma.patient.findFirst({
 			where: {
 				id: data.patientId,
@@ -129,6 +143,14 @@ export async function POST(req: Request) {
 				patient: true,
 			},
 		})
+
+		await AuditService.logTreatmentPlanAction('create', {
+			userId: session.user.id,
+			patientId: data.patientId,
+			planId: treatmentPlan.id,
+			aiGenerated: !!data.aiRecommendations,
+			success: true,
+		}).catch(console.error)
 
 		return NextResponse.json({ treatmentPlan }, { status: 201 })
 	} catch (error) {

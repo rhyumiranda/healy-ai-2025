@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { AuditService } from '@/lib/services/audit.service'
 
 const updatePatientSchema = z.object({
 	name: z.string().min(2).optional(),
@@ -24,6 +25,7 @@ export async function GET(
 	req: Request,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 		const { id } = await params
@@ -57,8 +59,21 @@ export async function GET(
 		}
 
 		if (patient.doctorId !== session.user.id) {
+			await AuditService.log('authorization_failure', 'Unauthorized patient access attempt', {
+				userId: session.user.id,
+				patientId: id,
+				success: false,
+				errorMessage: 'User does not own this patient record',
+			}).catch(console.error)
 			return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 		}
+
+		await AuditService.logPatientAccess('view', {
+			userId: session.user.id,
+			patientId: id,
+			success: true,
+			fieldsAccessed: ['name', 'dateOfBirth', 'gender', 'medicalHistory', 'treatmentPlans'],
+		}).catch(console.error)
 
 		return NextResponse.json({ patient })
 	} catch (error) {
@@ -74,6 +89,7 @@ export async function PATCH(
 	req: Request,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 		const { id } = await params
@@ -91,6 +107,12 @@ export async function PATCH(
 		}
 
 		if (existingPatient.doctorId !== session.user.id) {
+			await AuditService.log('authorization_failure', 'Unauthorized patient update attempt', {
+				userId: session.user.id,
+				patientId: id,
+				success: false,
+				errorMessage: 'User does not own this patient record',
+			}).catch(console.error)
 			return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 		}
 
@@ -106,6 +128,13 @@ export async function PATCH(
 				},
 			},
 		})
+
+		await AuditService.logPatientAccess('update', {
+			userId: session.user.id,
+			patientId: id,
+			success: true,
+			fieldsAccessed: Object.keys(data),
+		}).catch(console.error)
 
 		return NextResponse.json({ patient })
 	} catch (error) {
@@ -128,6 +157,7 @@ export async function DELETE(
 	req: Request,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 		const { id } = await params
@@ -145,12 +175,24 @@ export async function DELETE(
 		}
 
 		if (patient.doctorId !== session.user.id) {
+			await AuditService.log('authorization_failure', 'Unauthorized patient delete attempt', {
+				userId: session.user.id,
+				patientId: id,
+				success: false,
+				errorMessage: 'User does not own this patient record',
+			}).catch(console.error)
 			return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 		}
 
 		await prisma.patient.delete({
 			where: { id },
 		})
+
+		await AuditService.logPatientAccess('delete', {
+			userId: session.user.id,
+			patientId: id,
+			success: true,
+		}).catch(console.error)
 
 		return NextResponse.json({ success: true })
 	} catch (error) {
@@ -161,4 +203,3 @@ export async function DELETE(
 		)
 	}
 }
-

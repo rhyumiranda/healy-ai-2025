@@ -8,6 +8,7 @@ import {
 	FileText,
 	Plus,
 	Settings,
+	Activity,
 } from 'lucide-react'
 
 import { NavMain } from '@/components/nav-main'
@@ -50,6 +51,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				title: 'Treatment Plans',
 				url: '/dashboard/treatment-plans',
 				icon: FileText,
+			},
+			{
+				title: 'Activity Log',
+				url: '/dashboard/activity',
+				icon: Activity,
 			},
 			{
 				title: 'Settings',

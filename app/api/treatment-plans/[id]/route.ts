@@ -3,12 +3,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { AuditService } from '@/lib/services/audit.service'
 
-// GET - Get single treatment plan
 export async function GET(
 	req: Request,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 
@@ -35,6 +36,13 @@ export async function GET(
 			)
 		}
 
+		await AuditService.logTreatmentPlanAction('view', {
+			userId: session.user.id,
+			patientId: treatmentPlan.patientId,
+			planId: id,
+			success: true,
+		}).catch(console.error)
+
 		return NextResponse.json({ treatmentPlan })
 	} catch (error) {
 		console.error('Error fetching treatment plan:', error)
@@ -45,7 +53,6 @@ export async function GET(
 	}
 }
 
-// PATCH - Update treatment plan
 const updatePlanSchema = z.object({
 	chiefComplaint: z.string().optional(),
 	currentSymptoms: z.string().optional(),
@@ -68,6 +75,7 @@ export async function PATCH(
 	req: Request,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 
@@ -79,7 +87,6 @@ export async function PATCH(
 		const body = await req.json()
 		const data = updatePlanSchema.parse(body)
 
-		// Verify ownership
 		const existing = await prisma.treatmentPlan.findFirst({
 			where: {
 				id,
@@ -106,6 +113,21 @@ export async function PATCH(
 			},
 		})
 
+		let action: 'update' | 'approve' | 'reject' = 'update'
+		if (data.status === 'APPROVED' && existing.status !== 'APPROVED') {
+			action = 'approve'
+		} else if (data.status === 'REJECTED' && existing.status !== 'REJECTED') {
+			action = 'reject'
+		}
+
+		await AuditService.logTreatmentPlanAction(action, {
+			userId: session.user.id,
+			patientId: existing.patientId,
+			planId: id,
+			modifications: Object.keys(data),
+			success: true,
+		}).catch(console.error)
+
 		return NextResponse.json({ treatmentPlan })
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -123,11 +145,11 @@ export async function PATCH(
 	}
 }
 
-// DELETE - Delete treatment plan (only drafts)
 export async function DELETE(
 	req: Request,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 
@@ -161,6 +183,13 @@ export async function DELETE(
 		await prisma.treatmentPlan.delete({
 			where: { id },
 		})
+
+		await AuditService.logTreatmentPlanAction('delete', {
+			userId: session.user.id,
+			patientId: existing.patientId,
+			planId: id,
+			success: true,
+		}).catch(console.error)
 
 		return NextResponse.json({ success: true })
 	} catch (error) {

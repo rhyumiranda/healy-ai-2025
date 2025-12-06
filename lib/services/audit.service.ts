@@ -321,6 +321,7 @@ export class AuditService {
 			fieldsAccessed?: string[]
 			success?: boolean
 			errorMessage?: string
+			durationMs?: number
 		}
 	): Promise<string> {
 		const eventTypeMap: Record<string, AuditEventType> = {
@@ -344,6 +345,7 @@ export class AuditService {
 			ipAddress: options.ipAddress,
 			success: options.success ?? true,
 			errorMessage: options.errorMessage,
+			durationMs: options.durationMs,
 			phiAccessed: action !== 'list',
 			phiFields: options.fieldsAccessed || ['patient_record'],
 		})

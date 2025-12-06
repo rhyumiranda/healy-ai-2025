@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { OpenAIService } from '@/lib/services/openai.service'
 import { z } from 'zod'
+import { AuditService } from '@/lib/services/audit.service'
 
 const analyzeRequestSchema = z.object({
 	patient: z.object({
@@ -30,6 +31,7 @@ const analyzeRequestSchema = z.object({
 })
 
 export async function POST(req: Request) {
+	const startTime = Date.now()
 	try {
 		const session = await getServerSession(authOptions)
 
@@ -41,6 +43,14 @@ export async function POST(req: Request) {
 		const { useRAG, ...requestData } = analyzeRequestSchema.parse(body)
 
 		const analysis = await OpenAIService.analyzeTreatment(requestData, { useRAG })
+
+		await AuditService.logAIAnalysis({
+			userId: session.user.id,
+			patientId: requestData.patient.id,
+			analysisType: 'treatment_recommendation',
+			durationMs: Date.now() - startTime,
+			success: true,
+		}).catch(console.error)
 
 		return NextResponse.json({ analysis, usedRAG: useRAG ?? false })
 	} catch (error) {

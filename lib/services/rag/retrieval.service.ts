@@ -12,6 +12,8 @@ interface RetrievalOptions {
 	minSimilarity?: number
 	sourceTypes?: SourceType[]
 	severity?: SeverityAssessment | null
+	useHybridSearch?: boolean
+	ensureDiversity?: boolean
 }
 
 interface PatientContext {
@@ -37,6 +39,8 @@ export class RetrievalService {
 			minSimilarity = this.DEFAULT_MIN_SIMILARITY,
 			sourceTypes,
 			severity,
+			useHybridSearch = true,
+			ensureDiversity = true,
 		} = options
 
 		const query = this.buildSearchQuery(patient)
@@ -52,32 +56,69 @@ export class RetrievalService {
 
 		let allDocuments: RetrievedDocument[] = []
 
-		if (sourceTypes && sourceTypes.length > 0) {
-			const documentPromises = sourceTypes.map((sourceType) =>
-				VectorStoreService.searchSimilar(query, {
-					matchThreshold: adjustedMinSimilarity,
-					matchCount: Math.ceil(adjustedMaxDocs / sourceTypes.length) + 2,
-					filterSourceType: sourceType,
-					severityRelevance: severityTags,
-				})
-			)
+		const keywords = this.extractMedicalKeywords(patient)
 
-			const results = await Promise.all(documentPromises)
-			allDocuments = results.flat()
-		} else {
-			allDocuments = await VectorStoreService.searchSimilar(query, {
+		if (useHybridSearch && ensureDiversity) {
+			allDocuments = await VectorStoreService.searchWithDiversity(query, {
 				matchThreshold: adjustedMinSimilarity,
 				matchCount: adjustedMaxDocs * 2,
 				severityRelevance: severityTags,
+				keywords,
+				semanticWeight: severity?.isSevere ? 0.6 : 0.7,
+				keywordWeight: severity?.isSevere ? 0.4 : 0.3,
+				minPerSourceType: severity?.isSevere ? 3 : 2,
 			})
+		} else if (useHybridSearch) {
+			if (sourceTypes && sourceTypes.length > 0) {
+				const documentPromises = sourceTypes.map((sourceType) =>
+					VectorStoreService.hybridSearch(query, {
+						matchThreshold: adjustedMinSimilarity,
+						matchCount: Math.ceil(adjustedMaxDocs / sourceTypes.length) + 2,
+						filterSourceType: sourceType,
+						severityRelevance: severityTags,
+						keywords,
+					})
+				)
+
+				const results = await Promise.all(documentPromises)
+				allDocuments = results.flat()
+			} else {
+				allDocuments = await VectorStoreService.hybridSearch(query, {
+					matchThreshold: adjustedMinSimilarity,
+					matchCount: adjustedMaxDocs * 2,
+					severityRelevance: severityTags,
+					keywords,
+				})
+			}
+		} else {
+			if (sourceTypes && sourceTypes.length > 0) {
+				const documentPromises = sourceTypes.map((sourceType) =>
+					VectorStoreService.searchSimilar(query, {
+						matchThreshold: adjustedMinSimilarity,
+						matchCount: Math.ceil(adjustedMaxDocs / sourceTypes.length) + 2,
+						filterSourceType: sourceType,
+						severityRelevance: severityTags,
+					})
+				)
+
+				const results = await Promise.all(documentPromises)
+				allDocuments = results.flat()
+			} else {
+				allDocuments = await VectorStoreService.searchSimilar(query, {
+					matchThreshold: adjustedMinSimilarity,
+					matchCount: adjustedMaxDocs * 2,
+					severityRelevance: severityTags,
+				})
+			}
 		}
 
 		if (patient.currentMedications && patient.currentMedications.length > 0) {
 			const medicationQuery = patient.currentMedications.slice(0, 3).join(' ')
-			const interactionDocs = await VectorStoreService.searchSimilar(medicationQuery, {
+			const interactionDocs = await VectorStoreService.hybridSearch(medicationQuery, {
 				matchThreshold: adjustedMinSimilarity,
 				matchCount: 5,
 				filterSourceType: 'interaction',
+				keywords: patient.currentMedications.slice(0, 3),
 			})
 			allDocuments.push(...interactionDocs)
 		}
@@ -96,6 +137,27 @@ export class RetrievalService {
 			relevanceScore,
 			sourceBreakdown,
 		}
+	}
+
+	private static extractMedicalKeywords(patient: PatientContext): string[] {
+		const keywords: string[] = []
+
+		const complaintWords = patient.chiefComplaint.toLowerCase().split(/\s+/)
+		keywords.push(...complaintWords.filter(w => w.length > 3))
+
+		if (patient.currentSymptoms.length > 0) {
+			keywords.push(...patient.currentSymptoms.slice(0, 3).map(s => s.toLowerCase()))
+		}
+
+		if (patient.chronicConditions && patient.chronicConditions.length > 0) {
+			keywords.push(...patient.chronicConditions.slice(0, 2).map(c => c.toLowerCase()))
+		}
+
+		if (patient.currentMedications && patient.currentMedications.length > 0) {
+			keywords.push(...patient.currentMedications.slice(0, 2).map(m => m.toLowerCase()))
+		}
+
+		return [...new Set(keywords)].slice(0, 10)
 	}
 
 	private static buildSearchQuery(patient: PatientContext): string {

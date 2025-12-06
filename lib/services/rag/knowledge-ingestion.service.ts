@@ -137,10 +137,10 @@ export class KnowledgeIngestionService {
 				)
 
 				for (const article of searchResult.references) {
-					let abstract = article.abstract
+					let abstract: string | undefined = article.abstract
 
 					if (!abstract) {
-						abstract = await PubMedService.fetchAbstract(article.pmid)
+						abstract = (await PubMedService.fetchAbstract(article.pmid)) || undefined
 					}
 
 					if (!abstract) {

@@ -221,62 +221,154 @@ export class OpenAIService {
 
 	/**
 	 * Main entry point: Analyze treatment and generate recommendations
-	 * Uses RAG (Retrieval-Augmented Generation) when assistant is configured
+	 * Uses open-source RAG with pgvector and multi-source safety validation
 	 */
 	static async analyzeTreatment(
 		request: AIAnalysisRequest,
 		options: { useRAG?: boolean } = {}
 	): Promise<EnhancedAIAnalysisResponse> {
-		// If OpenAI is not configured, fall back to enhanced mock
 		if (!this.isConfigured()) {
 			console.warn('OpenAI API key not configured, using mock response')
 			return this.generateMockResponse(request)
 		}
 
 		try {
-			// Determine whether to use RAG
-			const useRAG = options.useRAG ?? AssistantService.hasAssistant()
+			// Step 1: Severity Detection (NEW)
+			console.log('Step 1: Assessing case severity...')
+			const severityAssessment = await SeverityDetectionService.assess({
+				chiefComplaint: request.chiefComplaint,
+				currentSymptoms: request.currentSymptoms,
+				vitalSigns: request.vitalSigns,
+				chronicConditions: request.patient.chronicConditions,
+				allergies: request.patient.allergies,
+				currentMedications: request.currentMedications,
+			})
 
-			// Step 1: Generate AI recommendations (with or without RAG)
+			if (severityAssessment.isSevere) {
+				console.log(`Severe case detected: ${severityAssessment.severityLevel}`)
+				console.log(`Triggers: ${severityAssessment.triggers.map((t) => t.value).join(', ')}`)
+			}
+
+			// Step 2: RAG Context Retrieval (NEW - using pgvector)
+			console.log('Step 2: Retrieving RAG context...')
+			let ragContext: RAGContext | null = null
+			const useRAG = options.useRAG !== false
+
+			if (useRAG) {
+				ragContext = await RetrievalService.getContext(
+					{
+						chiefComplaint: request.chiefComplaint,
+						currentSymptoms: request.currentSymptoms,
+						currentMedications: request.currentMedications,
+						chronicConditions: request.patient.chronicConditions,
+						allergies: request.patient.allergies,
+					},
+					{ severity: severityAssessment }
+				)
+				console.log(`RAG retrieved ${ragContext.documents.length} documents`)
+			}
+
+			// Step 3: AI Generation with RAG context
+			console.log('Step 3: Generating AI recommendations...')
 			let aiResponse: OpenAITreatmentResponse
 
-			if (useRAG && AssistantService.hasAssistant()) {
-				console.log('Using RAG-based analysis with Assistant API')
+			if (ragContext && ragContext.documents.length > 0) {
+				aiResponse = await this.callOpenAIWithRAGContext(request, ragContext)
+			} else if (AssistantService.hasAssistant()) {
+				console.log('Falling back to OpenAI Assistant RAG')
 				aiResponse = await this.callOpenAIWithRAG(request)
 			} else {
-				console.log('Using standard chat completions')
 				aiResponse = await this.callOpenAI(request)
 			}
 
-			// Step 2: Validate and enhance each medication
+			// Step 4: Cascade Validation (NEW - for severe cases)
+			let cascadeValidation: CascadeValidationResult | undefined
+			let blockedRecommendation = false
+
+			if (severityAssessment.isSevere) {
+				console.log('Step 4: Running cascade validation for severe case...')
+				cascadeValidation = await CascadeValidatorService.validate(
+					aiResponse,
+					{
+						allergies: request.patient.allergies,
+						chronicConditions: request.patient.chronicConditions,
+						currentMedications: request.currentMedications,
+						chiefComplaint: request.chiefComplaint,
+					},
+					severityAssessment
+				)
+
+				if (!cascadeValidation.isApproved) {
+					console.warn(`Cascade validation blocked: ${cascadeValidation.blockReason}`)
+					blockedRecommendation = true
+				}
+			}
+
+			// Step 5: Grounding Verification (NEW)
+			let groundingVerification: GroundingVerificationResult | undefined
+
+			if (ragContext && ragContext.documents.length > 0) {
+				console.log('Step 5: Verifying response grounding...')
+				groundingVerification = await GroundingVerificationService.verify(
+					aiResponse,
+					ragContext
+				)
+
+				if (!groundingVerification.isFullyGrounded) {
+					console.log(`Grounding: ${groundingVerification.groundedClaimsCount}/${groundingVerification.groundedClaimsCount + groundingVerification.ungroundedClaimsCount} claims grounded`)
+				}
+			}
+
+			// Step 6: Validate and enhance medications
 			const enhancedMedications = await this.enhanceMedications(
 				aiResponse.medications,
 				request
 			)
 
-			// Step 3: Check drug interactions across all medications
+			// Step 7: Check drug interactions
 			const allMedications = [
 				...enhancedMedications.map((m) => m.name),
 				...request.currentMedications,
 			]
 			const interactions = await MedicalApisService.checkDrugInteractions(allMedications)
 
-			// Step 4: Get references for the condition
-			const references = await PubMedService.getReferencesForTreatment(
-				request.chiefComplaint,
-				enhancedMedications.map((m) => m.genericName || m.name)
-			)
-
-			// Step 5: Calculate overall confidence
+			// Step 8: Calculate confidence with safety modifiers
 			const medicationConfidences = enhancedMedications
 				.map((m) => m.confidenceDetails)
 				.filter((c): c is ConfidenceResult => c !== undefined)
 
-			const overallConfidence = ConfidenceService.calculatePlanConfidence(
-				medicationConfidences
-			)
+			let overallConfidence = ConfidenceService.calculatePlanConfidence(medicationConfidences)
 
-			// Step 6: Map drug interactions to our format
+			// Apply safety modifiers to confidence
+			let confidenceModifier = severityAssessment.confidenceModifier
+			if (cascadeValidation) {
+				confidenceModifier += cascadeValidation.confidenceModifier
+			}
+			if (groundingVerification) {
+				confidenceModifier += groundingVerification.overallConfidenceModifier
+			}
+
+			if (confidenceModifier !== 0) {
+				overallConfidence = {
+					...overallConfidence,
+					overallScore: Math.max(0, Math.min(100, overallConfidence.overallScore + confidenceModifier)),
+					warnings: [
+						...overallConfidence.warnings,
+						...(cascadeValidation?.warnings || []),
+						...(groundingVerification?.warnings || []),
+					],
+				}
+
+				if (overallConfidence.overallScore < 40) {
+					overallConfidence.grade = 'INSUFFICIENT'
+				} else if (overallConfidence.overallScore < 60) {
+					overallConfidence.grade = 'LOW'
+				} else if (overallConfidence.overallScore < 80) {
+					overallConfidence.grade = 'MODERATE'
+				}
+			}
+
+			// Step 9: Map drug interactions
 			const drugInteractions: DrugInteraction[] = interactions.map((i) => ({
 				medication1: i.drug1,
 				medication2: i.drug2,
@@ -285,10 +377,18 @@ export class OpenAIService {
 				recommendation: i.recommendation,
 			}))
 
-			// Step 7: Extract contraindications from medications
+			// Step 10: Build contraindications
 			const contraindications: Contraindication[] = []
+
+			if (cascadeValidation && !cascadeValidation.isApproved && cascadeValidation.blockReason) {
+				contraindications.push({
+					medication: 'Recommended treatment',
+					reason: cascadeValidation.blockReason,
+					severity: 'Absolute',
+				})
+			}
+
 			for (const med of enhancedMedications) {
-				// Check patient allergies
 				for (const allergy of request.patient.allergies || []) {
 					if (
 						med.name.toLowerCase().includes(allergy.toLowerCase()) ||
@@ -303,7 +403,7 @@ export class OpenAIService {
 				}
 			}
 
-			// Step 7b: NSAID/Renal Guardrail - Post-processing safety check
+			// Step 11: NSAID Guardrail
 			const patientHasNSAIDContraindication = this.hasNSAIDContraindication(
 				request.patient.chronicConditions || []
 			)
@@ -315,30 +415,23 @@ export class OpenAIService {
 					request.patient.chronicConditions || []
 				)
 
-				// Find any NSAID medications that slipped through
 				const nsaidMedications = enhancedMedications.filter((med) =>
 					this.isNSAID(med.name) || (med.genericName && this.isNSAID(med.genericName))
 				)
 
-				// Add contraindications for each NSAID found
 				for (const nsaidMed of nsaidMedications) {
 					contraindications.push({
 						medication: nsaidMed.name,
-						reason: `NSAID contraindicated due to patient conditions: ${contraindicatedConditions.join(', ')}. NSAIDs can cause acute kidney injury, worsen hypertension, and accelerate CKD progression.`,
+						reason: `NSAID contraindicated due to patient conditions: ${contraindicatedConditions.join(', ')}`,
 						severity: 'Absolute',
 					})
 					nsaidWarningAdded = true
-					console.warn(
-						`NSAID Guardrail: Blocked ${nsaidMed.name} for patient with ${contraindicatedConditions.join(', ')}`
-					)
 				}
 
-				// Filter out NSAID medications from the recommendation list
 				filteredMedications = enhancedMedications.filter(
 					(med) => !this.isNSAID(med.name) && !(med.genericName && this.isNSAID(med.genericName))
 				)
 
-				// Also filter alternatives
 				for (const alt of aiResponse.alternatives) {
 					alt.medications = alt.medications.filter(
 						(med) => !this.isNSAID(med.name) && !(med.genericName && this.isNSAID(med.genericName))
@@ -346,7 +439,7 @@ export class OpenAIService {
 				}
 			}
 
-			// Step 8: Process alternatives
+			// Step 12: Process alternatives
 			const alternatives: AlternativePlan[] = await Promise.all(
 				aiResponse.alternatives.map(async (alt) => {
 					const altMeds = await this.enhanceMedications(alt.medications, request)
@@ -367,40 +460,169 @@ export class OpenAIService {
 				})
 			)
 
-			// Add NSAID guardrail risk factor if NSAIDs were blocked
+			// Build risk factors
 			const updatedRiskFactors = [...aiResponse.riskFactors]
 			if (nsaidWarningAdded) {
-				updatedRiskFactors.push(
-					'NSAID medications were automatically blocked due to patient comorbidities (Hypertension/Diabetes/CKD)'
-				)
+				updatedRiskFactors.push('NSAID medications blocked due to patient comorbidities')
+			}
+			if (severityAssessment.isSevere) {
+				updatedRiskFactors.push(`Case severity: ${severityAssessment.severityLevel}`)
+			}
+			if (cascadeValidation?.requiresManualReview) {
+				updatedRiskFactors.push('Manual physician review required')
+			}
+
+			// Determine if manual review is required
+			const requiresManualReview = severityAssessment.autoEscalate ||
+				cascadeValidation?.requiresManualReview ||
+				blockedRecommendation ||
+				overallConfidence.grade === 'INSUFFICIENT'
+
+			// Build disclaimer
+			let disclaimer = 'AI-assisted recommendation. All treatment decisions must be reviewed and approved by a licensed healthcare professional.'
+			if (requiresManualReview) {
+				disclaimer = 'ATTENTION: This case requires manual physician review before proceeding. ' + disclaimer
+			}
+			if (blockedRecommendation) {
+				disclaimer = 'WARNING: AI recommendation was blocked due to safety concerns. ' + disclaimer
 			}
 
 			return {
-				medications: filteredMedications,
-				riskLevel: aiResponse.riskLevel,
+				medications: blockedRecommendation ? [] : filteredMedications,
+				riskLevel: blockedRecommendation ? 'HIGH' : aiResponse.riskLevel,
 				riskFactors: updatedRiskFactors,
-				riskJustification: aiResponse.riskJustification,
+				riskJustification: blockedRecommendation
+					? `Recommendation blocked: ${cascadeValidation?.blockReason}`
+					: aiResponse.riskJustification,
 				drugInteractions,
 				contraindications,
-				alternatives,
-				rationale: aiResponse.rationale,
+				alternatives: blockedRecommendation ? [] : alternatives,
+				rationale: blockedRecommendation
+					? `Safety validation failed. ${cascadeValidation?.blockReason}. Please review manually.`
+					: aiResponse.rationale,
 				confidenceScore: overallConfidence.overallScore,
 				generatedAt: new Date().toISOString(),
 				overallConfidence,
-				disclaimer:
-					'AI-assisted recommendation. All treatment decisions must be reviewed and approved by a licensed healthcare professional.',
+				disclaimer,
 				generationMetadata: {
 					model: MODEL,
 					temperature: TEMPERATURE,
-					validationSources: ['OpenFDA', 'RxNorm', 'PubMed'],
+					validationSources: ['OpenFDA', 'RxNorm', 'PubMed', 'pgvector-RAG'],
 					generatedAt: new Date().toISOString(),
+					usedRAG: !!ragContext && ragContext.documents.length > 0,
+					ragSourceCount: ragContext?.documents.length,
+				},
+				safetyMetadata: {
+					severityAssessment,
+					cascadeValidation,
+					groundingVerification,
+					requiresManualReview,
+					blockedRecommendation,
 				},
 			}
 		} catch (error) {
 			console.error('OpenAI treatment analysis error:', error)
-			// Fall back to mock response on error
 			return this.generateMockResponse(request)
 		}
+	}
+
+	/**
+	 * Call OpenAI with RAG context from pgvector
+	 */
+	private static async callOpenAIWithRAGContext(
+		request: AIAnalysisRequest,
+		ragContext: RAGContext
+	): Promise<OpenAITreatmentResponse> {
+		const patientAge = this.calculateAge(request.patient.dateOfBirth)
+		const ageCategory = patientAge < 18 ? 'Pediatric' : patientAge >= 65 ? 'Geriatric' : 'Adult'
+
+		const ragContextPrompt = RetrievalService.buildContextPrompt(ragContext)
+
+		const userPrompt = `
+${ragContextPrompt}
+
+---
+
+Generate a treatment plan for the following patient based on the medical knowledge provided above:
+
+PATIENT INFORMATION:
+- Age: ${patientAge} years (${ageCategory})
+- Gender: ${request.patient.gender}
+- Known Allergies: ${request.patient.allergies?.join(', ') || 'None documented'}
+- Chronic Conditions: ${request.patient.chronicConditions?.join(', ') || 'None documented'}
+- Current Medications: ${request.currentMedications?.join(', ') || 'None'}
+
+CLINICAL PRESENTATION:
+- Chief Complaint: ${request.chiefComplaint}
+- Current Symptoms: ${request.currentSymptoms.join(', ')}
+${request.vitalSigns ? `
+VITAL SIGNS:
+- Blood Pressure: ${request.vitalSigns.bloodPressureSystolic || 'N/A'}/${request.vitalSigns.bloodPressureDiastolic || 'N/A'} mmHg
+- Heart Rate: ${request.vitalSigns.heartRate || 'N/A'} bpm
+- Temperature: ${request.vitalSigns.temperature || 'N/A'}°F
+- Respiratory Rate: ${request.vitalSigns.respiratoryRate || 'N/A'}/min
+- O2 Saturation: ${request.vitalSigns.oxygenSaturation || 'N/A'}%
+` : ''}
+${request.additionalNotes ? `\nADDITIONAL NOTES:\n${request.additionalNotes}` : ''}
+
+Please provide treatment recommendations in JSON format with the following structure:
+{
+  "medications": [
+    {
+      "name": "Brand name",
+      "genericName": "Generic name",
+      "dosage": "Specific dosage (e.g., 500mg)",
+      "frequency": "How often (e.g., twice daily)",
+      "duration": "How long (e.g., 7 days)",
+      "route": "Administration route (oral, IV, topical, etc.)",
+      "instructions": "Special instructions",
+      "rationale": "Why this medication is recommended, cite sources [number] from above",
+      "confidenceScore": 0-100
+    }
+  ],
+  "riskLevel": "LOW" | "MEDIUM" | "HIGH",
+  "riskFactors": ["List of identified risk factors"],
+  "riskJustification": "Explanation of risk assessment",
+  "rationale": "Overall treatment approach rationale with source citations",
+  "alternatives": [
+    {
+      "medications": [/* same structure as above */],
+      "rationale": "Why this is a good alternative",
+      "riskLevel": "LOW" | "MEDIUM" | "HIGH"
+    }
+  ]
+}
+
+IMPORTANT:
+- Base recommendations on the medical knowledge provided above
+- Cite sources using [number] format where available
+- Check ALL medications against patient allergies
+- Consider age-appropriate dosing for ${ageCategory} patient
+- Account for potential interactions with current medications
+- Provide at least one alternative treatment option
+- Be conservative with confidence scores
+${this.hasNSAIDContraindication(request.patient.chronicConditions || []) ? `
+CRITICAL: DO NOT recommend NSAIDs - patient has ${this.getNSAIDContraindicatedConditions(request.patient.chronicConditions || []).join(', ')}
+` : ''}
+`
+
+		const completion = await openai.chat.completions.create({
+			model: MODEL,
+			messages: [
+				{ role: 'system', content: MEDICAL_SYSTEM_PROMPT },
+				{ role: 'user', content: userPrompt },
+			],
+			temperature: TEMPERATURE,
+			response_format: { type: 'json_object' },
+			max_tokens: 4096,
+		})
+
+		const content = completion.choices[0].message.content
+		if (!content) {
+			throw new Error('No response from OpenAI')
+		}
+
+		return JSON.parse(content) as OpenAITreatmentResponse
 	}
 
 	/**
@@ -709,6 +931,7 @@ Instead, recommend safer alternatives like Acetaminophen (Tylenol) for pain mana
 				temperature: 0,
 				validationSources: [],
 				generatedAt: new Date().toISOString(),
+				usedRAG: false,
 			},
 		}
 	}

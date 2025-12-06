@@ -92,6 +92,72 @@ const MODEL = 'gpt-4-turbo-preview'
 const TEMPERATURE = 0.2 // Low temperature for consistency
 
 // ============================================
+// NSAID/Renal Guardrail Configuration
+// ============================================
+
+const NSAID_MEDICATIONS = [
+	'ibuprofen',
+	'advil',
+	'motrin',
+	'naproxen',
+	'aleve',
+	'naprosyn',
+	'aspirin',
+	'diclofenac',
+	'voltaren',
+	'indomethacin',
+	'indocin',
+	'ketorolac',
+	'toradol',
+	'meloxicam',
+	'mobic',
+	'piroxicam',
+	'feldene',
+	'celecoxib',
+	'celebrex',
+	'nabumetone',
+	'relafen',
+	'etodolac',
+	'lodine',
+	'sulindac',
+	'clinoril',
+	'ketoprofen',
+	'orudis',
+	'flurbiprofen',
+	'ansaid',
+	'oxaprozin',
+	'daypro',
+]
+
+const NSAID_CONTRAINDICATED_CONDITIONS = [
+	'hypertension',
+	'high blood pressure',
+	'htn',
+	'diabetes',
+	'diabetes mellitus',
+	'type 1 diabetes',
+	'type 2 diabetes',
+	't1dm',
+	't2dm',
+	'dm',
+	'chronic kidney disease',
+	'ckd',
+	'kidney disease',
+	'renal disease',
+	'renal insufficiency',
+	'renal failure',
+	'kidney failure',
+	'stage 3 ckd',
+	'stage 4 ckd',
+	'stage 5 ckd',
+	'stage 3 chronic kidney disease',
+	'stage 4 chronic kidney disease',
+	'stage 5 chronic kidney disease',
+	'esrd',
+	'end stage renal disease',
+]
+
+// ============================================
 // System Prompts
 // ============================================
 
@@ -219,6 +285,49 @@ export class OpenAIService {
 				}
 			}
 
+			// Step 7b: NSAID/Renal Guardrail - Post-processing safety check
+			const patientHasNSAIDContraindication = this.hasNSAIDContraindication(
+				request.patient.chronicConditions || []
+			)
+			let filteredMedications = enhancedMedications
+			let nsaidWarningAdded = false
+
+			if (patientHasNSAIDContraindication) {
+				const contraindicatedConditions = this.getNSAIDContraindicatedConditions(
+					request.patient.chronicConditions || []
+				)
+
+				// Find any NSAID medications that slipped through
+				const nsaidMedications = enhancedMedications.filter((med) =>
+					this.isNSAID(med.name) || (med.genericName && this.isNSAID(med.genericName))
+				)
+
+				// Add contraindications for each NSAID found
+				for (const nsaidMed of nsaidMedications) {
+					contraindications.push({
+						medication: nsaidMed.name,
+						reason: `NSAID contraindicated due to patient conditions: ${contraindicatedConditions.join(', ')}. NSAIDs can cause acute kidney injury, worsen hypertension, and accelerate CKD progression.`,
+						severity: 'Absolute',
+					})
+					nsaidWarningAdded = true
+					console.warn(
+						`NSAID Guardrail: Blocked ${nsaidMed.name} for patient with ${contraindicatedConditions.join(', ')}`
+					)
+				}
+
+				// Filter out NSAID medications from the recommendation list
+				filteredMedications = enhancedMedications.filter(
+					(med) => !this.isNSAID(med.name) && !(med.genericName && this.isNSAID(med.genericName))
+				)
+
+				// Also filter alternatives
+				for (const alt of aiResponse.alternatives) {
+					alt.medications = alt.medications.filter(
+						(med) => !this.isNSAID(med.name) && !(med.genericName && this.isNSAID(med.genericName))
+					)
+				}
+			}
+
 			// Step 8: Process alternatives
 			const alternatives: AlternativePlan[] = await Promise.all(
 				aiResponse.alternatives.map(async (alt) => {
@@ -240,10 +349,18 @@ export class OpenAIService {
 				})
 			)
 
+			// Add NSAID guardrail risk factor if NSAIDs were blocked
+			const updatedRiskFactors = [...aiResponse.riskFactors]
+			if (nsaidWarningAdded) {
+				updatedRiskFactors.push(
+					'NSAID medications were automatically blocked due to patient comorbidities (Hypertension/Diabetes/CKD)'
+				)
+			}
+
 			return {
-				medications: enhancedMedications,
+				medications: filteredMedications,
 				riskLevel: aiResponse.riskLevel,
-				riskFactors: aiResponse.riskFactors,
+				riskFactors: updatedRiskFactors,
 				riskJustification: aiResponse.riskJustification,
 				drugInteractions,
 				contraindications,
@@ -364,6 +481,24 @@ IMPORTANT:
 - Account for potential interactions with current medications
 - Provide at least one alternative treatment option
 - Be conservative with confidence scores
+${this.hasNSAIDContraindication(request.patient.chronicConditions || []) ? `
+CRITICAL SAFETY GUARDRAIL - NSAID CONTRAINDICATION:
+This patient has one or more conditions that CONTRAINDICATE the use of NSAIDs:
+- Patient conditions: ${this.getNSAIDContraindicatedConditions(request.patient.chronicConditions || []).join(', ')}
+
+DO NOT recommend any NSAIDs including but not limited to:
+- Ibuprofen (Advil, Motrin)
+- Naproxen (Aleve, Naprosyn)
+- Aspirin (except low-dose cardiac aspirin if specifically indicated)
+- Diclofenac (Voltaren)
+- Ketorolac (Toradol)
+- Meloxicam (Mobic)
+- Celecoxib (Celebrex)
+- Any other COX inhibitors
+
+NSAIDs can cause acute kidney injury, worsen hypertension, and accelerate CKD progression.
+Instead, recommend safer alternatives like Acetaminophen (Tylenol) for pain management.
+` : ''}
 `
 
 		const completion = await openai.chat.completions.create({
@@ -465,24 +600,64 @@ IMPORTANT:
 	private static async generateMockResponse(
 		request: AIAnalysisRequest
 	): Promise<EnhancedAIAnalysisResponse> {
-		// Simulate delay
 		await new Promise((resolve) => setTimeout(resolve, 1500))
 
-		const mockMedications: EnhancedMedication[] = [
-			{
-				name: 'Ibuprofen',
-				genericName: 'Ibuprofen',
-				dosage: '400mg',
-				frequency: 'Every 6-8 hours as needed',
-				duration: '7 days',
-				route: 'Oral',
-				instructions: 'Take with food to reduce stomach irritation. Do not exceed 1200mg per day.',
-				confidenceScore: 78,
-				evidenceLevel: 'A',
-				fdaValidated: true,
-				references: [],
-			},
-		]
+		const patientHasNSAIDContraindication = this.hasNSAIDContraindication(
+			request.patient.chronicConditions || []
+		)
+
+		const contraindications: Contraindication[] = []
+		const riskFactors: string[] = ['Standard treatment approach']
+
+		let mockMedications: EnhancedMedication[]
+
+		if (patientHasNSAIDContraindication) {
+			const contraindicatedConditions = this.getNSAIDContraindicatedConditions(
+				request.patient.chronicConditions || []
+			)
+
+			mockMedications = [
+				{
+					name: 'Tylenol',
+					genericName: 'Acetaminophen',
+					dosage: '500-1000mg',
+					frequency: 'Every 6 hours as needed',
+					duration: '7 days',
+					route: 'Oral',
+					instructions: 'Do not exceed 3000mg per day. Avoid alcohol while taking this medication.',
+					confidenceScore: 82,
+					evidenceLevel: 'A',
+					fdaValidated: true,
+					references: [],
+				},
+			]
+
+			contraindications.push({
+				medication: 'NSAIDs (Ibuprofen, Naproxen, etc.)',
+				reason: `NSAID medications contraindicated due to patient conditions: ${contraindicatedConditions.join(', ')}. NSAIDs can cause acute kidney injury, worsen hypertension, and accelerate CKD progression.`,
+				severity: 'Absolute',
+			})
+
+			riskFactors.push(
+				'Patient has conditions contraindicating NSAID use - Acetaminophen recommended as alternative'
+			)
+		} else {
+			mockMedications = [
+				{
+					name: 'Ibuprofen',
+					genericName: 'Ibuprofen',
+					dosage: '400mg',
+					frequency: 'Every 6-8 hours as needed',
+					duration: '7 days',
+					route: 'Oral',
+					instructions: 'Take with food to reduce stomach irritation. Do not exceed 1200mg per day.',
+					confidenceScore: 78,
+					evidenceLevel: 'A',
+					fdaValidated: true,
+					references: [],
+				},
+			]
+		}
 
 		const mockConfidence: ConfidenceResult = {
 			overallScore: 75,
@@ -501,10 +676,10 @@ IMPORTANT:
 		return {
 			medications: mockMedications,
 			riskLevel: 'LOW',
-			riskFactors: ['Standard treatment approach'],
+			riskFactors,
 			riskJustification: 'Mock response with conservative risk assessment',
 			drugInteractions: [],
-			contraindications: [],
+			contraindications,
 			alternatives: [],
 			rationale: 'This is a mock response. Configure OpenAI API for real recommendations.',
 			confidenceScore: 75,
@@ -523,6 +698,48 @@ IMPORTANT:
 	// ============================================
 	// Helper Methods
 	// ============================================
+
+	/**
+	 * Check if a medication is an NSAID
+	 */
+	private static isNSAID(medicationName: string): boolean {
+		const lowerName = medicationName.toLowerCase()
+		return NSAID_MEDICATIONS.some(
+			(nsaid) => lowerName.includes(nsaid) || nsaid.includes(lowerName)
+		)
+	}
+
+	/**
+	 * Check if patient has conditions that contraindicate NSAID use
+	 */
+	private static hasNSAIDContraindication(chronicConditions: string[]): boolean {
+		if (!chronicConditions || chronicConditions.length === 0) return false
+
+		return chronicConditions.some((condition) => {
+			const lowerCondition = condition.toLowerCase()
+			return NSAID_CONTRAINDICATED_CONDITIONS.some(
+				(contraindicated) =>
+					lowerCondition.includes(contraindicated) ||
+					contraindicated.includes(lowerCondition)
+			)
+		})
+	}
+
+	/**
+	 * Get the specific contraindicated conditions for NSAID warning
+	 */
+	private static getNSAIDContraindicatedConditions(chronicConditions: string[]): string[] {
+		if (!chronicConditions || chronicConditions.length === 0) return []
+
+		return chronicConditions.filter((condition) => {
+			const lowerCondition = condition.toLowerCase()
+			return NSAID_CONTRAINDICATED_CONDITIONS.some(
+				(contraindicated) =>
+					lowerCondition.includes(contraindicated) ||
+					contraindicated.includes(lowerCondition)
+			)
+		})
+	}
 
 	private static calculateAge(dateOfBirth: string): number {
 		const today = new Date()

@@ -105,7 +105,7 @@ export function SecuritySection({
 					</CardDescription>
 				</CardHeader>
 				<CardContent className='space-y-4'>
-					<div className='flex items-center justify-between'>
+					<div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
 						<div className='space-y-0.5'>
 							<div className='flex items-center gap-2'>
 								<Key className='h-4 w-4 text-muted-foreground' />
@@ -119,14 +119,15 @@ export function SecuritySection({
 							variant='outline'
 							size='sm'
 							onClick={() => setPasswordDialogOpen(true)}
+							className='w-full sm:w-auto'
 						>
 							Change
 						</Button>
 					</div>
 					<Separator />
-					<div className='flex items-center justify-between'>
+					<div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
 						<div className='space-y-0.5'>
-							<div className='flex items-center gap-2'>
+							<div className='flex items-center gap-2 flex-wrap'>
 								<ShieldCheck className='h-4 w-4 text-muted-foreground' />
 								<span className='text-sm font-medium'>Two-Factor Authentication</span>
 								{twoFactorEnabled && (
@@ -142,6 +143,7 @@ export function SecuritySection({
 							size='sm'
 							onClick={handle2FAClick}
 							disabled={isTogglingTwoFactor}
+							className='w-full sm:w-auto'
 						>
 							{isTogglingTwoFactor ? (
 								<Loader2 className='h-4 w-4 animate-spin' />

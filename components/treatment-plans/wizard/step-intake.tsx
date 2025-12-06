@@ -143,7 +143,7 @@ export function StepIntake({ formData, onUpdate, errors }: StepIntakeProps) {
 					<CardDescription>Optional - Record current vital measurements</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+					<div className='grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
 						<div className='space-y-2'>
 							<Label>Blood Pressure (Systolic)</Label>
 							<div className='flex items-center gap-2'>

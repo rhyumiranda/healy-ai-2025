@@ -117,7 +117,7 @@ export function ProfileSection({
 				</CardDescription>
 			</CardHeader>
 			<CardContent className='space-y-6'>
-				<div className='flex items-center gap-6'>
+				<div className='flex flex-col sm:flex-row items-center gap-4 sm:gap-6'>
 					<div className='relative'>
 						<Avatar className='h-20 w-20'>
 							<AvatarImage src={profile?.avatarUrl} alt={profile?.name} />

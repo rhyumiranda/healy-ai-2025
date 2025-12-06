@@ -24,15 +24,15 @@ interface TreatmentPlanTableProps {
 export function TreatmentPlanTable({ plans, isLoading }: TreatmentPlanTableProps) {
 	if (isLoading) {
 		return (
-			<div className="rounded-md border">
+			<div className="rounded-md border overflow-x-auto">
 				<Table>
 					<TableHeader>
 						<TableRow>
 							<TableHead>Patient</TableHead>
-							<TableHead>Chief Complaint</TableHead>
+							<TableHead className="hidden sm:table-cell">Chief Complaint</TableHead>
 							<TableHead>Status</TableHead>
-							<TableHead>Risk Level</TableHead>
-							<TableHead>Created</TableHead>
+							<TableHead className="hidden md:table-cell">Risk Level</TableHead>
+							<TableHead className="hidden sm:table-cell">Created</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -41,16 +41,16 @@ export function TreatmentPlanTable({ plans, isLoading }: TreatmentPlanTableProps
 								<TableCell>
 									<Skeleton className="h-4 w-32" />
 								</TableCell>
-								<TableCell>
+								<TableCell className="hidden sm:table-cell">
 									<Skeleton className="h-4 w-48" />
 								</TableCell>
 								<TableCell>
 									<Skeleton className="h-5 w-20" />
 								</TableCell>
-								<TableCell>
+								<TableCell className="hidden md:table-cell">
 									<Skeleton className="h-5 w-24" />
 								</TableCell>
-								<TableCell>
+								<TableCell className="hidden sm:table-cell">
 									<Skeleton className="h-4 w-24" />
 								</TableCell>
 							</TableRow>
@@ -78,15 +78,15 @@ export function TreatmentPlanTable({ plans, isLoading }: TreatmentPlanTableProps
 	}
 
 	return (
-		<div className="rounded-md border">
+		<div className="rounded-md border overflow-x-auto">
 			<Table>
 				<TableHeader>
 					<TableRow>
 						<TableHead>Patient</TableHead>
-						<TableHead>Chief Complaint</TableHead>
+						<TableHead className="hidden sm:table-cell">Chief Complaint</TableHead>
 						<TableHead>Status</TableHead>
-						<TableHead>Risk Level</TableHead>
-						<TableHead>Created</TableHead>
+						<TableHead className="hidden md:table-cell">Risk Level</TableHead>
+						<TableHead className="hidden sm:table-cell">Created</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -99,8 +99,11 @@ export function TreatmentPlanTable({ plans, isLoading }: TreatmentPlanTableProps
 								>
 									{plan.patient.name}
 								</Link>
+								<p className="text-xs text-muted-foreground sm:hidden mt-1 truncate max-w-[150px]">
+									{plan.chiefComplaint}
+								</p>
 							</TableCell>
-							<TableCell className="max-w-[300px]">
+							<TableCell className="max-w-[300px] hidden sm:table-cell">
 								<span className="truncate block text-muted-foreground">
 									{plan.chiefComplaint}
 								</span>
@@ -108,10 +111,10 @@ export function TreatmentPlanTable({ plans, isLoading }: TreatmentPlanTableProps
 							<TableCell>
 								<StatusBadge status={plan.status} />
 							</TableCell>
-							<TableCell>
+							<TableCell className="hidden md:table-cell">
 								<RiskBadge level={plan.riskLevel} />
 							</TableCell>
-							<TableCell className="text-muted-foreground">
+							<TableCell className="text-muted-foreground hidden sm:table-cell">
 								{formatDistanceToNow(new Date(plan.createdAt), { addSuffix: true })}
 							</TableCell>
 						</TableRow>

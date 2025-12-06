@@ -65,13 +65,13 @@ export function PatientWizard() {
 
 			<div className="min-h-[400px]">{renderStep()}</div>
 
-			<div className="flex justify-between pt-4 border-t">
-				<Button variant="outline" onClick={prevStep} disabled={isFirstStep || isLoading}>
+			<div className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-between pt-4 border-t">
+				<Button variant="outline" onClick={prevStep} disabled={isFirstStep || isLoading} className="w-full sm:w-auto">
 					<ArrowLeft className="mr-2 h-4 w-4" />
 					Previous
 				</Button>
 				{isLastStep ? (
-					<Button onClick={handleSubmit} disabled={isLoading}>
+					<Button onClick={handleSubmit} disabled={isLoading} className="w-full sm:w-auto">
 						{isLoading ? (
 							<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</>
 						) : (
@@ -79,7 +79,7 @@ export function PatientWizard() {
 						)}
 					</Button>
 				) : (
-					<Button onClick={handleNext} disabled={!isCurrentStepValid()}>
+					<Button onClick={handleNext} disabled={!isCurrentStepValid()} className="w-full sm:w-auto">
 						Next
 						<ArrowRight className="ml-2 h-4 w-4" />
 					</Button>

@@ -49,15 +49,15 @@ export function PatientTable({ patients, isLoading }: PatientTableProps) {
 
 	if (isLoading) {
 		return (
-			<div className='border rounded-lg'>
+			<div className='border rounded-lg overflow-x-auto'>
 				<Table>
 					<TableHeader>
 						<TableRow>
 							<TableHead className='w-[250px]'>Patient</TableHead>
-							<TableHead>Gender</TableHead>
-							<TableHead>Conditions</TableHead>
-							<TableHead>Plans</TableHead>
-							<TableHead>Last Updated</TableHead>
+							<TableHead className='hidden sm:table-cell'>Gender</TableHead>
+							<TableHead className='hidden md:table-cell'>Conditions</TableHead>
+							<TableHead className='hidden sm:table-cell'>Plans</TableHead>
+							<TableHead className='hidden md:table-cell'>Last Updated</TableHead>
 							<TableHead className='w-[50px]' />
 						</TableRow>
 					</TableHeader>
@@ -70,16 +70,16 @@ export function PatientTable({ patients, isLoading }: PatientTableProps) {
 										<div className='h-3 w-20 bg-muted animate-pulse rounded' />
 									</div>
 								</TableCell>
-								<TableCell>
+								<TableCell className='hidden sm:table-cell'>
 									<div className='h-5 w-16 bg-muted animate-pulse rounded' />
 								</TableCell>
-								<TableCell>
+								<TableCell className='hidden md:table-cell'>
 									<div className='h-5 w-24 bg-muted animate-pulse rounded' />
 								</TableCell>
-								<TableCell>
+								<TableCell className='hidden sm:table-cell'>
 									<div className='h-5 w-8 bg-muted animate-pulse rounded' />
 								</TableCell>
-								<TableCell>
+								<TableCell className='hidden md:table-cell'>
 									<div className='h-4 w-20 bg-muted animate-pulse rounded' />
 								</TableCell>
 								<TableCell />
@@ -106,15 +106,15 @@ export function PatientTable({ patients, isLoading }: PatientTableProps) {
 	}
 
 	return (
-		<div className='border rounded-lg'>
+		<div className='border rounded-lg overflow-x-auto'>
 			<Table>
 				<TableHeader>
 					<TableRow>
 						<TableHead className='w-[250px]'>Patient</TableHead>
-						<TableHead>Gender</TableHead>
-						<TableHead>Conditions</TableHead>
-						<TableHead>Plans</TableHead>
-						<TableHead>Last Updated</TableHead>
+						<TableHead className='hidden sm:table-cell'>Gender</TableHead>
+						<TableHead className='hidden md:table-cell'>Conditions</TableHead>
+						<TableHead className='hidden sm:table-cell'>Plans</TableHead>
+						<TableHead className='hidden md:table-cell'>Last Updated</TableHead>
 						<TableHead className='w-[50px]' />
 					</TableRow>
 				</TableHeader>
@@ -131,12 +131,15 @@ export function PatientTable({ patients, isLoading }: PatientTableProps) {
 									<p className='text-sm text-muted-foreground'>
 										{calculateAge(patient.dateOfBirth)} years old
 									</p>
+									<div className='sm:hidden mt-1'>
+										<GenderBadge gender={patient.gender} />
+									</div>
 								</div>
 							</TableCell>
-							<TableCell>
+							<TableCell className='hidden sm:table-cell'>
 								<GenderBadge gender={patient.gender} />
 							</TableCell>
-							<TableCell>
+							<TableCell className='hidden md:table-cell'>
 								{patient.chronicConditions.length > 0 ? (
 									<div className='flex flex-wrap gap-1'>
 										{patient.chronicConditions.slice(0, 2).map((condition) => (
@@ -158,12 +161,12 @@ export function PatientTable({ patients, isLoading }: PatientTableProps) {
 									<span className='text-muted-foreground text-sm'>—</span>
 								)}
 							</TableCell>
-							<TableCell>
+							<TableCell className='hidden sm:table-cell'>
 								<span className='text-sm'>
 									{patient._count?.treatmentPlans || 0}
 								</span>
 							</TableCell>
-							<TableCell>
+							<TableCell className='hidden md:table-cell'>
 								<span className='text-sm text-muted-foreground'>
 									{formatDistanceToNow(new Date(patient.updatedAt), {
 										addSuffix: true,

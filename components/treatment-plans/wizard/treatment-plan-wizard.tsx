@@ -133,7 +133,7 @@ export function TreatmentPlanWizard() {
 			</AnimatePresence>
 
 			<motion.div
-				className='flex justify-between pt-4 border-t'
+				className='flex flex-col-reverse gap-4 sm:flex-row sm:justify-between pt-4 border-t'
 				animate={{
 					opacity: isTransitioning ? 0 : 1,
 					y: isTransitioning ? 20 : 0,
@@ -144,18 +144,20 @@ export function TreatmentPlanWizard() {
 					variant='outline'
 					onClick={prevStep}
 					disabled={isFirstStep || isLoading || isAnalyzing || isTransitioning}
+					className='w-full sm:w-auto'
 				>
 					<ArrowLeft className='mr-2 h-4 w-4' />
 					Previous
 				</Button>
 
-				<div className='flex gap-2'>
+				<div className='flex flex-col sm:flex-row gap-2'>
 					{isLastStep ? (
 						<>
 							<Button
 								variant='outline'
 								onClick={handleSaveDraft}
 								disabled={isLoading}
+								className='w-full sm:w-auto'
 							>
 								{isLoading ? (
 									<Loader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -167,6 +169,7 @@ export function TreatmentPlanWizard() {
 							<Button
 								onClick={handleApprove}
 								disabled={isLoading || !formData.aiAnalysis}
+								className='w-full sm:w-auto'
 							>
 								{isLoading ? (
 									<Loader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -180,7 +183,7 @@ export function TreatmentPlanWizard() {
 						<Button
 							onClick={handleNext}
 							disabled={!isCurrentStepValid() || isAnalyzing || isTransitioning}
-							className={currentStep === 2 ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white' : ''}
+							className={`w-full sm:w-auto ${currentStep === 2 ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white' : ''}`}
 						>
 							{isAnalyzing || isTransitioning ? (
 								<>

@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, KeyboardEvent } from 'react'
-import { X } from 'lucide-react'
+import { X, Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 interface TagInputProps {
 	value: string[]
@@ -13,22 +14,27 @@ interface TagInputProps {
 }
 
 export function TagInput({
-	value,
+	value = [],
 	onChange,
 	placeholder = 'Type and press Enter',
 	disabled = false,
 }: TagInputProps) {
 	const [inputValue, setInputValue] = useState('')
 
+	const addTag = () => {
+		const trimmed = inputValue.trim()
+		if (trimmed && !value.includes(trimmed)) {
+			const newTags = [...value, trimmed]
+			onChange(newTags)
+		}
+		setInputValue('')
+	}
+
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter' && inputValue.trim()) {
+		if (e.key === 'Enter' || e.key === ',') {
 			e.preventDefault()
-			const newTags = [...value, inputValue.trim()]
-			console.log('[TagInput] Adding tag:', inputValue.trim(), 'New array:', newTags)
-			if (!value.includes(inputValue.trim())) {
-				onChange(newTags)
-			}
-			setInputValue('')
+			e.stopPropagation()
+			addTag()
 		} else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
 			onChange(value.slice(0, -1))
 		}
@@ -40,33 +46,48 @@ export function TagInput({
 
 	return (
 		<div className='space-y-2'>
-			<div className='flex flex-wrap gap-1.5'>
-				{value.map((tag) => (
-					<Badge
-						key={tag}
-						variant='secondary'
-						className='gap-1 pr-1 font-normal'
-					>
-						{tag}
-						<button
-							type='button'
-							onClick={() => removeTag(tag)}
-							disabled={disabled}
-							className='ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors'
+			{value.length > 0 && (
+				<div className='flex flex-wrap gap-1.5'>
+					{value.map((tag) => (
+						<Badge
+							key={tag}
+							variant='secondary'
+							className='gap-1 pr-1 font-normal'
 						>
-							<X className='h-3 w-3' />
-						</button>
-					</Badge>
-				))}
+							{tag}
+							<button
+								type='button'
+								onClick={() => removeTag(tag)}
+								disabled={disabled}
+								className='ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors'
+							>
+								<X className='h-3 w-3' />
+							</button>
+						</Badge>
+					))}
+				</div>
+			)}
+			<div className='flex gap-2'>
+				<Input
+					type='text'
+					value={inputValue}
+					onChange={(e) => setInputValue(e.target.value)}
+					onKeyDown={handleKeyDown}
+					placeholder={placeholder}
+					disabled={disabled}
+					className='h-9 flex-1'
+				/>
+				<Button
+					type='button'
+					variant='outline'
+					size='sm'
+					onClick={addTag}
+					disabled={disabled || !inputValue.trim()}
+					className='h-9 px-3'
+				>
+					<Plus className='h-4 w-4' />
+				</Button>
 			</div>
-			<Input
-				value={inputValue}
-				onChange={(e) => setInputValue(e.target.value)}
-				onKeyDown={handleKeyDown}
-				placeholder={placeholder}
-				disabled={disabled}
-				className='h-9'
-			/>
 		</div>
 	)
 }

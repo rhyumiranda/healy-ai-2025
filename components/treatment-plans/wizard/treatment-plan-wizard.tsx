@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, Loader2, Save, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2, Save, Check, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTreatmentPlanWizard } from '@/src/modules/treatment-plans'
 import { WizardProgress } from './wizard-progress'
@@ -8,6 +8,7 @@ import { StepSelectPatient } from './step-select-patient'
 import { StepIntake } from './step-intake'
 import { StepAIAnalysis } from './step-ai-analysis'
 import { StepReview } from './step-review'
+import { AISparkleIcon } from '@/components/ui/ai-loading-animation'
 
 export function TreatmentPlanWizard() {
 	const {
@@ -147,16 +148,18 @@ export function TreatmentPlanWizard() {
 						<Button
 							onClick={handleNext}
 							disabled={!isCurrentStepValid() || isAnalyzing}
+							className={currentStep === 2 ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white' : ''}
 						>
 							{isAnalyzing ? (
 								<>
-									<Loader2 className='mr-2 h-4 w-4 animate-spin' />
+									<Sparkles className='mr-2 h-4 w-4 animate-ai-sparkle text-white' />
 									Analyzing...
 								</>
 							) : (
 								<>
+									{currentStep === 2 && <AISparkleIcon className='mr-2' />}
 									{getNextButtonText()}
-									<ArrowRight className='ml-2 h-4 w-4' />
+									{currentStep !== 2 && <ArrowRight className='ml-2 h-4 w-4' />}
 								</>
 							)}
 						</Button>

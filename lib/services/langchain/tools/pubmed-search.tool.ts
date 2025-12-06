@@ -86,3 +86,4 @@ export const PubMedSearchTool = new DynamicStructuredTool({
 		return JSON.stringify(result, null, 2)
 	},
 })
+

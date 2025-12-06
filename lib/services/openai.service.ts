@@ -210,13 +210,18 @@ DISCLAIMER: This is a clinical decision support tool. All recommendations requir
 // ============================================
 
 export class OpenAIService {
-	private static apiKey: string | undefined = process.env.OPENAI_API_KEY
-
 	/**
 	 * Check if OpenAI is configured
+	 * Note: Must read process.env directly at runtime, not from a static property,
+	 * because static properties are evaluated at module load time before env vars are injected
 	 */
 	static isConfigured(): boolean {
-		return !!this.apiKey
+		const apiKey = process.env.OPENAI_API_KEY
+		console.log('[OpenAI] isConfigured check:', {
+			hasKey: !!apiKey,
+			keyPrefix: apiKey ? apiKey.substring(0, 7) + '...' : 'undefined',
+		})
+		return !!apiKey
 	}
 
 	/**
@@ -522,7 +527,7 @@ export class OpenAIService {
 			}
 		} catch (error) {
 			console.error('OpenAI treatment analysis error:', error)
-			return this.generateMockResponse(request)
+			return this.generateErrorResponse(request, error)
 		}
 	}
 
@@ -928,6 +933,65 @@ Instead, recommend safer alternatives like Acetaminophen (Tylenol) for pain mana
 			disclaimer: 'MOCK RESPONSE - OpenAI API not configured. This is not a real medical recommendation.',
 			generationMetadata: {
 				model: 'mock',
+				temperature: 0,
+				validationSources: [],
+				generatedAt: new Date().toISOString(),
+				usedRAG: false,
+			},
+		}
+	}
+
+	/**
+	 * Generate error response when a runtime error occurs during AI analysis
+	 * This is different from mock response - it indicates an actual error happened
+	 */
+	private static generateErrorResponse(
+		request: AIAnalysisRequest,
+		error: unknown
+	): EnhancedAIAnalysisResponse {
+		const errorMessage = error instanceof Error ? error.message : String(error)
+		
+		console.error('[OpenAI] Runtime error during analysis:', {
+			error: errorMessage,
+			patientId: request.patient.id,
+			chiefComplaint: request.chiefComplaint,
+		})
+
+		const errorConfidence: ConfidenceResult = {
+			overallScore: 0,
+			grade: 'INSUFFICIENT',
+			breakdown: {
+				drugValidation: 0,
+				safetyScore: 0,
+				evidenceScore: 0,
+				patientFactors: 0,
+				aiBaseScore: 0,
+			},
+			warnings: [
+				'An error occurred during AI analysis',
+				`Error: ${errorMessage}`,
+			],
+			recommendations: [
+				'Please try again or contact support if the issue persists',
+				'Check server logs for more details',
+			],
+		}
+
+		return {
+			medications: [],
+			riskLevel: 'HIGH',
+			riskFactors: ['Unable to complete AI analysis due to error'],
+			riskJustification: `Analysis failed: ${errorMessage}`,
+			drugInteractions: [],
+			contraindications: [],
+			alternatives: [],
+			rationale: `An error occurred during AI analysis. Error: ${errorMessage}. Please try again.`,
+			confidenceScore: 0,
+			generatedAt: new Date().toISOString(),
+			overallConfidence: errorConfidence,
+			disclaimer: 'ERROR RESPONSE - AI analysis failed. This is not a valid medical recommendation. Please retry or consult a physician directly.',
+			generationMetadata: {
+				model: 'error',
 				temperature: 0,
 				validationSources: [],
 				generatedAt: new Date().toISOString(),

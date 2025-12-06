@@ -40,3 +40,4 @@ export const toolsByName = {
 	pubmed_search: PubMedSearchTool,
 	severity_assessment: SeverityAssessmentTool,
 }
+

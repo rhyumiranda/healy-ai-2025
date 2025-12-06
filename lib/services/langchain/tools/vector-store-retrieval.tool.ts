@@ -80,3 +80,4 @@ export const VectorStoreRetrievalTool = new DynamicStructuredTool({
 		return JSON.stringify(result, null, 2)
 	},
 })
+

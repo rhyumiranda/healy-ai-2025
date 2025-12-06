@@ -73,3 +73,4 @@ export const SeverityAssessmentTool = new DynamicStructuredTool({
 		return JSON.stringify(result, null, 2)
 	},
 })
+

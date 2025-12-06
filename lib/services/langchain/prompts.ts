@@ -163,3 +163,4 @@ export const TOOL_DESCRIPTIONS = {
 	severity_assessment: 'Assess case severity based on symptoms and vital signs',
 	guideline_search: 'Search for relevant clinical practice guidelines',
 }
+

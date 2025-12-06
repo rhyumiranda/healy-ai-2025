@@ -213,3 +213,4 @@ function getResourceType(pathname: string): string {
 	if (pathname.includes('/knowledge')) return 'knowledge_base'
 	return 'unknown'
 }
+

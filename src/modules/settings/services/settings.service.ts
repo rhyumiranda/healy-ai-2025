@@ -44,6 +44,35 @@ const MOCK_SESSIONS: ActiveSession[] = [
 	},
 ]
 
+// ============================================
+// Local Storage Keys
+// ============================================
+
+const APPEARANCE_STORAGE_KEY = 'medassist-appearance-settings'
+
+// ============================================
+// Local Storage Helpers
+// ============================================
+
+function getStoredAppearanceSettings(): AppearanceSettings | null {
+	if (typeof window === 'undefined') return null
+	try {
+		const stored = localStorage.getItem(APPEARANCE_STORAGE_KEY)
+		return stored ? JSON.parse(stored) : null
+	} catch {
+		return null
+	}
+}
+
+function storeAppearanceSettings(settings: AppearanceSettings): void {
+	if (typeof window === 'undefined') return
+	try {
+		localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(settings))
+	} catch {
+		// Ignore storage errors
+	}
+}
+
 export class SettingsService {
 	private static simulateDelay(ms: number = 500): Promise<void> {
 		return new Promise(resolve => setTimeout(resolve, ms))
@@ -156,7 +185,9 @@ export class SettingsService {
 
 	static async getAppearanceSettings(): Promise<AppearanceSettings> {
 		await this.simulateDelay()
-		return { ...DEFAULT_APPEARANCE_SETTINGS }
+		// Read from localStorage first
+		const stored = getStoredAppearanceSettings()
+		return stored ?? { ...DEFAULT_APPEARANCE_SETTINGS }
 	}
 
 	static async updateAppearanceSettings(
@@ -164,9 +195,12 @@ export class SettingsService {
 	): Promise<AppearanceSettings> {
 		await this.simulateDelay()
 		const current = await this.getAppearanceSettings()
-		return {
+		const updated = {
 			...current,
 			...data,
 		}
+		// Persist to localStorage
+		storeAppearanceSettings(updated)
+		return updated
 	}
 }

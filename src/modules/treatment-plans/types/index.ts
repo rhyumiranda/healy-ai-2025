@@ -2,6 +2,10 @@ import type { PlanStatus, RiskLevel, Gender } from '@/lib/generated/prisma'
 
 export type { PlanStatus, RiskLevel }
 
+// ============================================
+// Base Types
+// ============================================
+
 export interface VitalSigns {
 	bloodPressureSystolic?: number
 	bloodPressureDiastolic?: number
@@ -10,6 +14,45 @@ export interface VitalSigns {
 	respiratoryRate?: number
 	oxygenSaturation?: number
 }
+
+// ============================================
+// Evidence & References
+// ============================================
+
+export type EvidenceLevel = 'A' | 'B' | 'C' | 'D'
+
+export interface ClinicalReference {
+	pmid: string
+	title: string
+	authors: string[]
+	journal: string
+	year: number
+	abstract?: string
+	doi?: string
+	url: string
+	relevanceScore: number
+	publicationType: string[]
+}
+
+export interface ConfidenceBreakdown {
+	drugValidation: number
+	safetyScore: number
+	evidenceScore: number
+	patientFactors: number
+	aiBaseScore: number
+}
+
+export interface ConfidenceResult {
+	overallScore: number
+	grade: 'HIGH' | 'MODERATE' | 'LOW' | 'INSUFFICIENT'
+	breakdown: ConfidenceBreakdown
+	warnings: string[]
+	recommendations: string[]
+}
+
+// ============================================
+// Medication Types
+// ============================================
 
 export interface Medication {
 	name: string
@@ -22,24 +65,49 @@ export interface Medication {
 	confidenceScore?: number
 }
 
+export interface MedicationWithEvidence extends Medication {
+	rxcui?: string
+	ndcCode?: string
+	evidenceLevel: EvidenceLevel
+	references: ClinicalReference[]
+	fdaValidated: boolean
+	ageAdjustedDosage?: boolean
+	renalAdjustment?: string
+	hepaticAdjustment?: string
+	confidenceDetails?: ConfidenceResult
+	rationale?: string
+}
+
+// ============================================
+// Drug Safety Types
+// ============================================
+
 export interface DrugInteraction {
 	medication1: string
 	medication2: string
 	severity: 'Mild' | 'Moderate' | 'Severe'
 	description: string
 	recommendation: string
+	source?: 'OpenFDA' | 'RxNorm' | 'Clinical'
+	pmid?: string
 }
 
 export interface Contraindication {
 	medication: string
 	reason: string
 	severity: 'Absolute' | 'Relative'
+	patientCondition?: string
 }
+
+// ============================================
+// Treatment Plan Types
+// ============================================
 
 export interface AlternativePlan {
 	medications: Medication[]
 	rationale: string
 	riskLevel: RiskLevel
+	confidenceScore?: number
 }
 
 export interface AIRecommendations {
@@ -143,6 +211,10 @@ export interface UpdateTreatmentPlanInput {
 	modificationNotes?: string
 }
 
+// ============================================
+// Wizard Types
+// ============================================
+
 export type TreatmentWizardStep = 1 | 2 | 3 | 4
 
 export type SymptomDuration = 'days' | 'weeks' | 'months' | 'years'
@@ -191,6 +263,10 @@ export interface TreatmentPlanWizardData {
 	wasModified: boolean
 }
 
+// ============================================
+// AI Analysis Types
+// ============================================
+
 export interface AIAnalysisRequest {
 	patient: PatientSummary
 	chiefComplaint: string
@@ -214,6 +290,22 @@ export interface AIAnalysisResponse {
 	generatedAt: string
 }
 
+export interface EnhancedAIAnalysisResponse extends Omit<AIAnalysisResponse, 'medications'> {
+	medications: MedicationWithEvidence[]
+	overallConfidence: ConfidenceResult
+	disclaimer: string
+	generationMetadata: {
+		model: string
+		temperature: number
+		validationSources: string[]
+		generatedAt: string
+	}
+}
+
+// ============================================
+// Wizard Configuration
+// ============================================
+
 export interface WizardStepConfig {
 	id: TreatmentWizardStep
 	title: string
@@ -226,3 +318,35 @@ export const WIZARD_STEPS: WizardStepConfig[] = [
 	{ id: 3, title: 'AI Analysis', description: 'Review recommendations' },
 	{ id: 4, title: 'Review & Approve', description: 'Finalize plan' },
 ]
+
+// ============================================
+// Evidence Level Helpers
+// ============================================
+
+export const EVIDENCE_LEVEL_LABELS: Record<EvidenceLevel, string> = {
+	A: 'Systematic Review / Meta-Analysis',
+	B: 'Randomized Controlled Trial',
+	C: 'Cohort / Case-Control Study',
+	D: 'Expert Opinion / Case Report',
+}
+
+export const EVIDENCE_LEVEL_COLORS: Record<EvidenceLevel, string> = {
+	A: 'green',
+	B: 'blue',
+	C: 'yellow',
+	D: 'gray',
+}
+
+export const CONFIDENCE_GRADE_LABELS: Record<ConfidenceResult['grade'], string> = {
+	HIGH: 'High Confidence',
+	MODERATE: 'Moderate Confidence',
+	LOW: 'Low Confidence',
+	INSUFFICIENT: 'Insufficient Data',
+}
+
+export const CONFIDENCE_GRADE_COLORS: Record<ConfidenceResult['grade'], string> = {
+	HIGH: 'green',
+	MODERATE: 'yellow',
+	LOW: 'orange',
+	INSUFFICIENT: 'red',
+}

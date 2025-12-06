@@ -47,8 +47,6 @@ export class PatientService {
 	}
 
 	static async createPatient(input: CreatePatientInput): Promise<Patient> {
-		console.log('[Service] createPatient input:', input)
-		console.log('[Service] JSON payload:', JSON.stringify(input))
 		const response = await fetch('/api/patients', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },

@@ -10,7 +10,7 @@ import {
 	intakeSchema,
 	reviewSchema,
 } from '../utils/validation'
-import { OpenAIService } from '@/lib/services/openai.service'
+import { AIAnalysisService } from '../services/ai-analysis.service'
 import { useCreateTreatmentPlan } from './use-treatment-plan-mutations'
 
 const INITIAL_FORM_DATA: TreatmentPlanWizardData = {
@@ -182,7 +182,7 @@ export function useTreatmentPlanWizard() {
 				additionalNotes: formData.additionalNotes,
 			}
 
-			const response = await OpenAIService.analyzeTreatment(request)
+			const response = await AIAnalysisService.analyzeTreatment(request)
 			
 			setFormData((prev) => ({
 				...prev,

@@ -38,12 +38,7 @@ export function usePatientWizard() {
 	}, [formData])
 
 	const updateFormData = useCallback((data: Partial<PatientWizardData>) => {
-		console.log('[Wizard] updateFormData called with:', data)
-		setFormData((prev) => {
-			const newState = { ...prev, ...data }
-			console.log('[Wizard] New formData state:', newState)
-			return newState
-		})
+		setFormData((prev) => ({ ...prev, ...data }))
 	}, [])
 
 	const validateStep = useCallback(
@@ -138,8 +133,6 @@ export function usePatientWizard() {
 
 	const submitForm = useCallback(async () => {
 		const currentFormData = formDataRef.current
-		console.log('[Wizard] Submitting formData:', currentFormData)
-
 		const submitData = {
 			name: currentFormData.name,
 			dateOfBirth: currentFormData.dateOfBirth,
@@ -158,7 +151,6 @@ export function usePatientWizard() {
 				? currentFormData.chronicConditions
 				: [],
 		}
-		console.log('[Wizard] Submit payload:', submitData)
 		return createPatient(submitData)
 	}, [createPatient])
 

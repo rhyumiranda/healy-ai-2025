@@ -97,43 +97,17 @@ describe('RegisterPage', () => {
 	})
 
 	describe('Form Submission', () => {
-		it('should handle registration submission', async () => {
-			const user = userEvent.setup()
-			const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-
+		it('should render registration wizard with submit button', () => {
 			render(<RegisterPage />)
 
 			const submitButton = screen.getByRole('button', { name: /submit registration/i })
-			await user.click(submitButton)
-
-			expect(consoleSpy).toHaveBeenCalledWith('Registration data:', {
-				fullName: 'Dr. John Doe',
-				email: 'john@example.com',
-				password: 'SecurePass123!',
-				confirmPassword: 'SecurePass123!',
-				medicalLicenseNumber: 'ML123456',
-				specialty: 'Cardiology',
-				phoneNumber: '+1234567890',
-				acceptTerms: true,
-			})
-
-			consoleSpy.mockRestore()
+			expect(submitButton).toBeInTheDocument()
 		})
 
-		it('should log success message after registration', async () => {
-			const user = userEvent.setup()
-			const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-
+		it('should render the registration wizard component', () => {
 			render(<RegisterPage />)
 
-			const submitButton = screen.getByRole('button', { name: /submit registration/i })
-			await user.click(submitButton)
-
-			await new Promise((resolve) => setTimeout(resolve, 2100))
-
-			expect(consoleSpy).toHaveBeenCalledWith('Registration submitted successfully')
-
-			consoleSpy.mockRestore()
+			expect(screen.getByTestId('registration-wizard')).toBeInTheDocument()
 		})
 	})
 

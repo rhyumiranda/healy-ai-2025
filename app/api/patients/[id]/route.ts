@@ -11,6 +11,9 @@ const updatePatientSchema = z.object({
 		.transform((str) => new Date(str))
 		.optional(),
 	gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
+	weight: z.number().optional().nullable(),
+	height: z.number().optional().nullable(),
+	bloodType: z.string().optional().nullable(),
 	medicalHistory: z.string().optional().nullable(),
 	currentMedications: z.array(z.string()).optional(),
 	allergies: z.array(z.string()).optional(),
@@ -158,3 +161,4 @@ export async function DELETE(
 		)
 	}
 }
+

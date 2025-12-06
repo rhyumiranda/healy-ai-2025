@@ -8,6 +8,9 @@ const createPatientSchema = z.object({
 	name: z.string().min(2, 'Name must be at least 2 characters'),
 	dateOfBirth: z.string().transform((str) => new Date(str)),
 	gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
+	weight: z.number().optional(),
+	height: z.number().optional(),
+	bloodType: z.string().optional(),
 	medicalHistory: z.string().optional(),
 	currentMedications: z.array(z.string()).optional().default([]),
 	allergies: z.array(z.string()).optional().default([]),
@@ -83,7 +86,9 @@ export async function POST(req: Request) {
 		}
 
 		const body = await req.json()
+		console.log('[API] Received body:', body)
 		const data = createPatientSchema.parse(body)
+		console.log('[API] Parsed data:', data)
 
 		const patient = await prisma.patient.create({
 			data: {
@@ -113,3 +118,4 @@ export async function POST(req: Request) {
 		)
 	}
 }
+

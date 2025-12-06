@@ -69,8 +69,8 @@ export default function DashboardPage() {
 			</header>
 			<div className='flex flex-1 flex-col gap-4 p-4 pt-0'>
 				<div className='space-y-2'>
-					<h2 className='text-3xl font-bold tracking-tight'>Dashboard</h2>
-					<p className='text-muted-foreground'>
+					<h2 className='text-2xl sm:text-3xl font-bold tracking-tight'>Dashboard</h2>
+					<p className='text-muted-foreground text-sm sm:text-base'>
 						Welcome back! Here&apos;s an overview of your practice.
 					</p>
 				</div>
@@ -103,8 +103,8 @@ export default function DashboardPage() {
 					})}
 				</div>
 
-				<div className='grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
-					<Card className='col-span-4'>
+				<div className='grid gap-4 lg:grid-cols-7'>
+					<Card className='lg:col-span-4'>
 						<CardHeader>
 							<CardTitle>Recent Activity</CardTitle>
 							<CardDescription>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
 							</div>
 						</CardContent>
 					</Card>
-					<Card className='col-span-3'>
+					<Card className='lg:col-span-3'>
 						<CardHeader>
 							<CardTitle>Quick Actions</CardTitle>
 							<CardDescription>

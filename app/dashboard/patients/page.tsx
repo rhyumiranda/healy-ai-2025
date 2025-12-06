@@ -58,29 +58,31 @@ export default function PatientsPage() {
 			</header>
 
 			<div className='flex flex-1 flex-col gap-6 p-4 pt-0'>
-				<div className='flex items-center justify-between'>
+				<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
 					<div>
 						<h1 className='text-2xl font-semibold tracking-tight'>Patients</h1>
 						<p className='text-sm text-muted-foreground'>
 							Manage patient records and medical histories
 						</p>
 					</div>
-					<div className='flex items-center gap-2'>
+					<div className='flex items-center gap-2 w-full sm:w-auto'>
 						<Button
 							variant='outline'
 							size='sm'
 							onClick={refetch}
 							disabled={isLoading}
+							className='flex-1 sm:flex-none'
 						>
 							<RefreshCw
-								className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
+								className={`h-4 w-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`}
 							/>
-							Refresh
+							<span className='hidden sm:inline'>Refresh</span>
 						</Button>
-						<Link href='/dashboard/patients/new'>
-							<Button size='sm'>
-								<Plus className='h-4 w-4 mr-2' />
-								Add Patient
+						<Link href='/dashboard/patients/new' className='flex-1 sm:flex-none'>
+							<Button size='sm' className='w-full'>
+								<Plus className='h-4 w-4 sm:mr-2' />
+								<span className='hidden sm:inline'>Add Patient</span>
+								<span className='sm:hidden'>Add</span>
 							</Button>
 						</Link>
 					</div>

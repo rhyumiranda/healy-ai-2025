@@ -167,7 +167,7 @@ export default function TreatmentPlanDetailPage({
 			</header>
 
 			<div className="flex flex-1 flex-col gap-6 p-4 pt-0">
-				<div className="flex items-center justify-between">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex items-center gap-4">
 						<Link href="/dashboard/treatment-plans">
 							<Button variant="ghost" size="icon" className="h-8 w-8">
@@ -175,8 +175,8 @@ export default function TreatmentPlanDetailPage({
 							</Button>
 						</Link>
 						<div>
-							<div className="flex items-center gap-3">
-								<h1 className="text-2xl font-semibold tracking-tight">
+							<div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+								<h1 className="text-xl sm:text-2xl font-semibold tracking-tight">
 									Treatment Plan
 								</h1>
 								<StatusBadge status={plan.status} />
@@ -186,22 +186,22 @@ export default function TreatmentPlanDetailPage({
 							</p>
 						</div>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex items-center gap-2 flex-wrap">
 						{canEdit && (
 							<Link href={`/dashboard/treatment-plans/${id}/edit`}>
 								<Button variant="outline" size="sm">
-									<Edit className="h-4 w-4 mr-2" />
-									Edit
+									<Edit className="h-4 w-4 sm:mr-2" />
+									<span className="hidden sm:inline">Edit</span>
 								</Button>
 							</Link>
 						)}
 						<Button variant="outline" size="sm" onClick={handlePrint}>
-							<Printer className="h-4 w-4 mr-2" />
-							Print
+							<Printer className="h-4 w-4 sm:mr-2" />
+							<span className="hidden sm:inline">Print</span>
 						</Button>
 						<Button variant="outline" size="sm">
-							<Copy className="h-4 w-4 mr-2" />
-							Clone
+							<Copy className="h-4 w-4 sm:mr-2" />
+							<span className="hidden sm:inline">Clone</span>
 						</Button>
 						{canDelete && (
 							<Button
@@ -210,8 +210,8 @@ export default function TreatmentPlanDetailPage({
 								className="text-destructive hover:text-destructive"
 								onClick={() => setShowDeleteDialog(true)}
 							>
-								<Trash2 className="h-4 w-4 mr-2" />
-								Delete
+								<Trash2 className="h-4 w-4 sm:mr-2" />
+								<span className="hidden sm:inline">Delete</span>
 							</Button>
 						)}
 					</div>
@@ -320,10 +320,10 @@ export default function TreatmentPlanDetailPage({
 									</CardTitle>
 								</CardHeader>
 								<CardContent>
-									<div className="grid gap-3 sm:grid-cols-4">
+									<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
 										{plan.vitalSigns.bloodPressureSystolic && plan.vitalSigns.bloodPressureDiastolic && (
 											<div className="text-center p-3 bg-slate-50 rounded-lg">
-												<p className="text-2xl font-semibold">
+												<p className="text-xl sm:text-2xl font-semibold">
 													{plan.vitalSigns.bloodPressureSystolic}/{plan.vitalSigns.bloodPressureDiastolic}
 												</p>
 												<p className="text-xs text-muted-foreground">Blood Pressure</p>
@@ -331,19 +331,19 @@ export default function TreatmentPlanDetailPage({
 										)}
 										{plan.vitalSigns.heartRate && (
 											<div className="text-center p-3 bg-slate-50 rounded-lg">
-												<p className="text-2xl font-semibold">{plan.vitalSigns.heartRate}</p>
+												<p className="text-xl sm:text-2xl font-semibold">{plan.vitalSigns.heartRate}</p>
 												<p className="text-xs text-muted-foreground">Heart Rate (bpm)</p>
 											</div>
 										)}
 										{plan.vitalSigns.temperature && (
 											<div className="text-center p-3 bg-slate-50 rounded-lg">
-												<p className="text-2xl font-semibold">{plan.vitalSigns.temperature}°F</p>
+												<p className="text-xl sm:text-2xl font-semibold">{plan.vitalSigns.temperature}°F</p>
 												<p className="text-xs text-muted-foreground">Temperature</p>
 											</div>
 										)}
 										{plan.vitalSigns.oxygenSaturation && (
 											<div className="text-center p-3 bg-slate-50 rounded-lg">
-												<p className="text-2xl font-semibold">{plan.vitalSigns.oxygenSaturation}%</p>
+												<p className="text-xl sm:text-2xl font-semibold">{plan.vitalSigns.oxygenSaturation}%</p>
 												<p className="text-xs text-muted-foreground">O₂ Saturation</p>
 											</div>
 										)}
@@ -364,15 +364,15 @@ export default function TreatmentPlanDetailPage({
 							</CardHeader>
 							<CardContent>
 								{medications.length > 0 ? (
-									<div className="rounded-lg border">
+									<div className="rounded-lg border overflow-x-auto">
 										<Table>
 											<TableHeader>
 												<TableRow className="bg-slate-50/50">
 													<TableHead>Medication</TableHead>
 													<TableHead>Dosage</TableHead>
-													<TableHead>Frequency</TableHead>
-													<TableHead>Duration</TableHead>
-													<TableHead>Route</TableHead>
+													<TableHead className="hidden sm:table-cell">Frequency</TableHead>
+													<TableHead className="hidden md:table-cell">Duration</TableHead>
+													<TableHead className="hidden sm:table-cell">Route</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
@@ -386,12 +386,15 @@ export default function TreatmentPlanDetailPage({
 																		{med.instructions}
 																	</p>
 																)}
+																<p className="text-xs text-muted-foreground sm:hidden mt-1">
+																	{med.dosage} • {med.frequency}
+																</p>
 															</div>
 														</TableCell>
 														<TableCell>{med.dosage}</TableCell>
-														<TableCell>{med.frequency}</TableCell>
-														<TableCell>{med.duration}</TableCell>
-														<TableCell>{med.route}</TableCell>
+														<TableCell className="hidden sm:table-cell">{med.frequency}</TableCell>
+														<TableCell className="hidden md:table-cell">{med.duration}</TableCell>
+														<TableCell className="hidden sm:table-cell">{med.route}</TableCell>
 													</TableRow>
 												))}
 											</TableBody>

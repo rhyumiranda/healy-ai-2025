@@ -180,3 +180,4 @@ export function PatientTable({ patients, isLoading }: PatientTableProps) {
 		</div>
 	)
 }
+

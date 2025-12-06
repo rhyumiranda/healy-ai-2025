@@ -1,5 +1,5 @@
-import { ClipboardCheck, User, Heart, Pill, Activity } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ClipboardCheck, User, Heart, Pill } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { PatientWizardData } from "@/src/modules/patients"
 
@@ -78,28 +78,6 @@ export function StepReview({ formData }: StepReviewProps) {
 					</div>
 				</CardContent>
 			</Card>
-
-			{(formData.bloodPressureSystolic || formData.heartRate || formData.chiefComplaint) && (
-				<Card>
-					<CardHeader>
-						<div className="flex items-center gap-2">
-							<Activity className="h-5 w-5" />
-							<CardTitle className="text-lg">Vitals & Symptoms</CardTitle>
-						</div>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						{(formData.bloodPressureSystolic || formData.heartRate) && (
-							<dl className="grid gap-3 sm:grid-cols-3">
-								{formData.bloodPressureSystolic && <div><dt className="text-sm text-muted-foreground">Blood Pressure</dt><dd className="font-medium">{formData.bloodPressureSystolic}/{formData.bloodPressureDiastolic} mmHg</dd></div>}
-								{formData.heartRate && <div><dt className="text-sm text-muted-foreground">Heart Rate</dt><dd className="font-medium">{formData.heartRate} bpm</dd></div>}
-								{formData.temperature && <div><dt className="text-sm text-muted-foreground">Temperature</dt><dd className="font-medium">{formData.temperature}°C</dd></div>}
-							</dl>
-						)}
-						{formData.chiefComplaint && <div><dt className="text-sm text-muted-foreground mb-1">Chief Complaint</dt><dd className="text-sm">{formData.chiefComplaint}</dd></div>}
-						{(formData.currentSymptoms?.length ?? 0) > 0 && <div><dt className="text-sm text-muted-foreground mb-2">Current Symptoms</dt><dd className="flex flex-wrap gap-2">{formData.currentSymptoms?.map((s, i) => <Badge key={i} variant="secondary">{s}</Badge>)}</dd></div>}
-					</CardContent>
-				</Card>
-			)}
 		</div>
 	)
 }

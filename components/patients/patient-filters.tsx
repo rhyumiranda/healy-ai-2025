@@ -101,3 +101,4 @@ export function PatientFilters({ filters, onFilterChange }: PatientFiltersProps)
 		</div>
 	)
 }
+

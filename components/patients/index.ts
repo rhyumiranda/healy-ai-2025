@@ -4,3 +4,4 @@ export { PatientTable } from './patient-table'
 export { PatientFilters } from './patient-filters'
 export { PatientPagination } from './patient-pagination'
 export * from './wizard'
+

@@ -23,8 +23,10 @@ export function TagInput({
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === 'Enter' && inputValue.trim()) {
 			e.preventDefault()
+			const newTags = [...value, inputValue.trim()]
+			console.log('[TagInput] Adding tag:', inputValue.trim(), 'New array:', newTags)
 			if (!value.includes(inputValue.trim())) {
-				onChange([...value, inputValue.trim()])
+				onChange(newTags)
 			}
 			setInputValue('')
 		} else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
@@ -68,3 +70,4 @@ export function TagInput({
 		</div>
 	)
 }
+

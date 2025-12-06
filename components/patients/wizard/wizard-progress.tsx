@@ -10,8 +10,7 @@ const STEP_CONFIG = [
 	{ id: 1, title: 'Demographics', description: 'Basic patient info' },
 	{ id: 2, title: 'Medical History', description: 'Past conditions' },
 	{ id: 3, title: 'Medications', description: 'Current meds & allergies' },
-	{ id: 4, title: 'Vitals', description: 'Baseline measurements' },
-	{ id: 5, title: 'Review', description: 'Confirm & submit' },
+	{ id: 4, title: 'Review', description: 'Confirm & submit' },
 ]
 
 export function WizardProgress({ currentStep, totalSteps }: WizardProgressProps) {

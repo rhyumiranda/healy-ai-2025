@@ -7,7 +7,6 @@ import { WizardProgress } from './wizard-progress'
 import { StepDemographics } from './step-demographics'
 import { StepMedicalHistory } from './step-medical-history'
 import { StepMedications } from './step-medications'
-import { StepVitals } from './step-vitals'
 import { StepReview } from './step-review'
 
 export function PatientWizard() {
@@ -48,8 +47,6 @@ export function PatientWizard() {
 			case 3:
 				return <StepMedications formData={formData} onUpdate={updateFormData} errors={errors} />
 			case 4:
-				return <StepVitals formData={formData} onUpdate={updateFormData} errors={errors} />
-			case 5:
 				return <StepReview formData={formData} />
 			default:
 				return null

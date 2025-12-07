@@ -6,8 +6,73 @@ import type {
 	PatientsResponse,
 	PatientFilters,
 } from '../types'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { AuditService } from '@/lib/services/audit.service'
 
 export class PatientService {
+	static async getPatientsServer(filters: PatientFilters = {}): Promise<PatientsResponse> {
+		const session = await getServerSession(authOptions)
+
+		if (!session?.user?.id) {
+			throw new Error('Unauthorized')
+		}
+
+		const startTime = Date.now()
+		const doctorId = session.user.id
+
+		const search = filters.search || ''
+		const gender = filters.gender
+		const sortBy = filters.sortBy || 'updatedAt'
+		const sortOrder = filters.sortOrder || 'desc'
+		const page = filters.page || 1
+		const pageSize = filters.pageSize || 10
+
+		const where = {
+			doctorId,
+			...(search && {
+				name: {
+					contains: search,
+					mode: 'insensitive' as const,
+				},
+			}),
+			...(gender && { gender: gender as 'MALE' | 'FEMALE' | 'OTHER' }),
+		}
+
+		const [patients, total] = await Promise.all([
+			prisma.patient.findMany({
+				where,
+				orderBy: {
+					[sortBy]: sortOrder,
+				},
+				skip: (page - 1) * pageSize,
+				take: pageSize,
+				include: {
+					_count: {
+						select: { treatmentPlans: true },
+					},
+				},
+			}),
+			prisma.patient.count({ where }),
+		])
+
+		await AuditService.logPatientAccess('list', {
+			userId: session.user.id,
+			success: true,
+			durationMs: Date.now() - startTime,
+		}).catch(() => {
+			// Failed to log audit event
+		})
+
+		return {
+			patients,
+			total,
+			page,
+			pageSize,
+			totalPages: Math.ceil(total / pageSize),
+		}
+	}
 	static async getPatients(filters: PatientFilters = {}): Promise<PatientsResponse> {
 		const params = new URLSearchParams()
 

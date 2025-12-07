@@ -1,9 +1,20 @@
 import OpenAI from 'openai'
 import type { AIAnalysisRequest } from '@/src/modules/treatment-plans'
 
-const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY,
-})
+let openai: OpenAI | null = null
+
+function getOpenAIClient(): OpenAI {
+	if (!openai) {
+		const apiKey = process.env.OPENAI_API_KEY
+		if (!apiKey) {
+			const error = new Error('OPENAI_API_KEY is not configured')
+			error.name = 'OpenAIConfigurationError'
+			throw error
+		}
+		openai = new OpenAI({ apiKey })
+	}
+	return openai
+}
 
 const ASSISTANT_NAME = 'Medical Treatment Advisor'
 const MODEL = 'gpt-4-turbo'
@@ -91,7 +102,7 @@ export class AssistantService {
 	static async getOrCreateVectorStore(name: string = 'Medical Knowledge Base'): Promise<string> {
 		if (this.vectorStoreId) {
 			try {
-				const existing = await openai.vectorStores.retrieve(this.vectorStoreId)
+				const existing = await getOpenAIClient().vectorStores.retrieve(this.vectorStoreId)
 				if (existing) {
 					return this.vectorStoreId
 				}
@@ -100,7 +111,7 @@ export class AssistantService {
 			}
 		}
 
-		const vectorStore = await openai.vectorStores.create({
+		const vectorStore = await getOpenAIClient().vectorStores.create({
 			name,
 			expires_after: {
 				anchor: 'last_active_at',
@@ -118,7 +129,7 @@ export class AssistantService {
 	static async getOrCreateAssistant(): Promise<string> {
 		if (this.assistantId) {
 			try {
-				const existing = await openai.beta.assistants.retrieve(this.assistantId)
+				const existing = await getOpenAIClient().beta.assistants.retrieve(this.assistantId)
 				if (existing) {
 					return this.assistantId
 				}
@@ -129,7 +140,7 @@ export class AssistantService {
 
 		const vectorStoreId = await this.getOrCreateVectorStore()
 
-		const assistant = await openai.beta.assistants.create({
+		const assistant = await getOpenAIClient().beta.assistants.create({
 			name: ASSISTANT_NAME,
 			instructions: MEDICAL_SYSTEM_PROMPT,
 			model: MODEL,
@@ -157,12 +168,12 @@ export class AssistantService {
 
 		const uint8Array = new Uint8Array(fileBuffer)
 		const blob = new Blob([uint8Array], { type: 'application/json' })
-		const file = await openai.files.create({
+		const file = await getOpenAIClient().files.create({
 			file: new File([blob], filename, { type: 'application/json' }),
 			purpose: 'assistants',
 		})
 
-		const vectorStoreFile = await openai.vectorStores.files.create(vectorStoreId, {
+		const vectorStoreFile = await getOpenAIClient().vectorStores.files.create(vectorStoreId, {
 			file_id: file.id,
 		})
 
@@ -184,12 +195,12 @@ export class AssistantService {
 		for (const { buffer, filename } of files) {
 			const uint8Array = new Uint8Array(buffer)
 			const blob = new Blob([uint8Array], { type: 'application/json' })
-			const file = await openai.files.create({
+			const file = await getOpenAIClient().files.create({
 				file: new File([blob], filename, { type: 'application/json' }),
 				purpose: 'assistants',
 			})
 
-			await openai.vectorStores.files.create(vectorStoreId, {
+			await getOpenAIClient().vectorStores.files.create(vectorStoreId, {
 				file_id: file.id,
 			})
 
@@ -206,12 +217,12 @@ export class AssistantService {
 		}
 
 		try {
-			const vectorStore = await openai.vectorStores.retrieve(this.vectorStoreId)
-			const filesResponse = await openai.vectorStores.files.list(this.vectorStoreId)
+			const vectorStore = await getOpenAIClient().vectorStores.retrieve(this.vectorStoreId)
+			const filesResponse = await getOpenAIClient().vectorStores.files.list(this.vectorStoreId)
 
 			const files: VectorStoreFile[] = []
 			for await (const file of filesResponse) {
-				const fileDetails = await openai.files.retrieve(file.id)
+				const fileDetails = await getOpenAIClient().files.retrieve(file.id)
 				files.push({
 					id: file.id,
 					filename: fileDetails.filename,
@@ -239,8 +250,8 @@ export class AssistantService {
 		}
 
 		try {
-			await openai.vectorStores.files.delete(fileId, { vector_store_id: this.vectorStoreId })
-			await openai.files.delete(fileId)
+			await getOpenAIClient().vectorStores.files.delete(fileId, { vector_store_id: this.vectorStoreId })
+			await getOpenAIClient().files.delete(fileId)
 			return true
 		} catch (error) {
 			console.error('Error deleting file:', error)
@@ -321,7 +332,7 @@ IMPORTANT:
 - Be conservative with confidence scores
 `
 
-		const thread = await openai.beta.threads.create({
+		const thread = await getOpenAIClient().beta.threads.create({
 			messages: [
 				{
 					role: 'user',
@@ -330,7 +341,7 @@ IMPORTANT:
 			],
 		})
 
-		const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+		const run = await getOpenAIClient().beta.threads.runs.createAndPoll(thread.id, {
 			assistant_id: assistantId,
 		})
 
@@ -338,7 +349,7 @@ IMPORTANT:
 			throw new Error(`Run failed with status: ${run.status}`)
 		}
 
-		const messages = await openai.beta.threads.messages.list(thread.id)
+		const messages = await getOpenAIClient().beta.threads.messages.list(thread.id)
 		const assistantMessage = messages.data.find((m) => m.role === 'assistant')
 
 		if (!assistantMessage) {
@@ -356,7 +367,7 @@ IMPORTANT:
 					for (const annotation of content.text.annotations) {
 						if (annotation.type === 'file_citation') {
 							try {
-								const file = await openai.files.retrieve(annotation.file_citation.file_id)
+								const file = await getOpenAIClient().files.retrieve(annotation.file_citation.file_id)
 								citations.push({
 									filename: file.filename,
 									quote: annotation.text,

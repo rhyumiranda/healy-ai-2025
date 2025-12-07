@@ -186,7 +186,6 @@ export class VectorStoreService {
 			`, id)
 			return true
 		} catch (error) {
-			console.error('Error deleting document:', error)
 			return false
 		}
 	}
@@ -205,7 +204,6 @@ export class VectorStoreService {
 			`, sourceId)
 			return true
 		} catch (error) {
-			console.error('Error deleting by source ID:', error)
 			return false
 		}
 	}

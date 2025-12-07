@@ -33,7 +33,7 @@ export function useLoginForm() {
 					}))
 				}
 			} catch (error) {
-				console.error('Failed to load saved login data:', error)
+				// Failed to load saved login data
 			}
 			setIsInitialized(true)
 		}
@@ -50,7 +50,7 @@ export function useLoginForm() {
 				}
 				sessionStorage.setItem('form_login', JSON.stringify(dataToSave))
 			} catch (error) {
-				console.error('Failed to save login data:', error)
+				// Failed to save login data
 			}
 		}, 500)
 
@@ -127,7 +127,7 @@ export function useLoginForm() {
 				try {
 					sessionStorage.removeItem('form_login')
 				} catch (e) {
-					console.error('Failed to clear saved data:', e)
+					// Failed to clear saved data
 				}
 			} catch (error) {
 				setFormState((prev) => ({

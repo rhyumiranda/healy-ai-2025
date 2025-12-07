@@ -8,9 +8,34 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { DashboardContent } from '@/components/dashboard/dashboard-content'
+import { DashboardContentClient } from '@/components/dashboard/dashboard-content-client'
+import { DashboardService } from '@/src/modules/dashboard/services/dashboard.service'
+import type { DashboardStats, RecentActivity } from '@/src/modules/dashboard/types'
+import { AlertTriangle } from 'lucide-react'
 
-export default function DashboardPage() {
+export const revalidate = 30
+
+export default async function DashboardPage() {
+	let stats: DashboardStats
+	let recentActivity: RecentActivity[]
+	let error: string | null = null
+
+	try {
+		const data = await DashboardService.getDashboardStatsServer()
+		stats = data.stats
+		recentActivity = data.recentActivity
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Failed to load dashboard data'
+		stats = {
+			totalPatients: 0,
+			patientChange: 0,
+			activeTreatmentPlans: 0,
+			planChange: 0,
+			safetyAlerts: 0,
+		}
+		recentActivity = []
+	}
+
 	return (
 		<>
 			<header className='flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12'>
@@ -43,7 +68,15 @@ export default function DashboardPage() {
 					</p>
 				</div>
 
-				<DashboardContent />
+				{error ? (
+					<div className='flex flex-col items-center justify-center p-8 text-center'>
+						<AlertTriangle className='h-12 w-12 text-destructive mb-4' />
+						<h3 className='text-lg font-semibold'>Failed to load dashboard</h3>
+						<p className='text-muted-foreground'>{error}</p>
+					</div>
+				) : (
+					<DashboardContentClient stats={stats} recentActivity={recentActivity} />
+				)}
 			</div>
 		</>
 	)

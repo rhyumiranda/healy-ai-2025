@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { OpenAIService } from '@/lib/services/openai.service'
 import { z } from 'zod'
 import { AuditService } from '@/lib/services/audit.service'
+import type { LabResults } from '@/src/modules/treatment-plans/types'
 
 const analyzeRequestSchema = z.object({
 	patient: z.object({
@@ -25,7 +26,7 @@ const analyzeRequestSchema = z.object({
 		respiratoryRate: z.number().optional(),
 		oxygenSaturation: z.number().optional(),
 	}).optional(),
-	labResults: z.any().optional(),
+	labResults: z.unknown().optional(),
 	additionalNotes: z.string().optional(),
 	useRAG: z.boolean().optional(),
 })
@@ -42,7 +43,10 @@ export async function POST(req: Request) {
 		const body = await req.json()
 		const { useRAG, ...requestData } = analyzeRequestSchema.parse(body)
 
-		const analysis = await OpenAIService.analyzeTreatment(requestData, { useRAG })
+		const analysis = await OpenAIService.analyzeTreatment({
+			...requestData,
+			labResults: requestData.labResults as LabResults | undefined,
+		}, { useRAG })
 
 		await AuditService.logAIAnalysis({
 			userId: session.user.id,
@@ -50,7 +54,9 @@ export async function POST(req: Request) {
 			analysisType: 'treatment_recommendation',
 			durationMs: Date.now() - startTime,
 			success: true,
-		}).catch(console.error)
+		}).catch(() => {
+			// Failed to log audit event
+		})
 
 		return NextResponse.json({ analysis, usedRAG: useRAG ?? false })
 	} catch (error) {
@@ -61,7 +67,6 @@ export async function POST(req: Request) {
 			)
 		}
 
-		console.error('Error analyzing treatment:', error)
 		return NextResponse.json(
 			{ error: 'Failed to analyze treatment' },
 			{ status: 500 }

@@ -29,7 +29,6 @@ export function useDashboard(): UseDashboardReturn {
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to fetch dashboard data'
 			setError(message)
-			console.error('Dashboard fetch error:', err)
 		} finally {
 			setIsLoading(false)
 		}

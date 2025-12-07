@@ -1,6 +1,3 @@
-'use client'
-
-import { useState } from 'react'
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -11,55 +8,63 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AuditLogTable } from '@/components/audit/audit-log-table'
-import { AuditLogFilters } from '@/components/audit/audit-log-filters'
-import { useAuditLogs, useExportAuditLogs, useAuditStats } from '@/src/modules/audit/hooks'
-import { AuditFilters } from '@/src/modules/audit/types'
-import { Activity, Shield, Brain, AlertTriangle } from 'lucide-react'
+import { ActivityPageClient } from '@/components/audit/activity-page-client'
+import { AuditService } from '@/src/modules/audit/services/audit.service'
+import type { AuditFilters } from '@/src/modules/audit/types'
 
-export default function ActivityPage() {
-	const [filters, setFilters] = useState<AuditFilters>({
-		page: 1,
-		pageSize: 20,
-		sortOrder: 'desc',
-		eventType: 'ALL',
-		severity: 'ALL',
-	})
+export const revalidate = 30
 
-	const { data, isLoading, error } = useAuditLogs(filters)
-	const { data: statsData } = useAuditStats()
-	const { exportLogs } = useExportAuditLogs()
-	const [isExporting, setIsExporting] = useState(false)
+interface ActivityPageProps {
+	searchParams: Promise<{
+		search?: string
+		eventType?: string
+		severity?: string
+		startDate?: string
+		endDate?: string
+		success?: string
+		patientId?: string
+		sortOrder?: string
+		page?: string
+		pageSize?: string
+	}>
+}
 
-	const handleFiltersChange = (newFilters: AuditFilters) => {
-		setFilters(newFilters)
+export default async function ActivityPage({ searchParams }: ActivityPageProps) {
+	const params = await searchParams
+
+	const filters: AuditFilters = {
+		search: params.search,
+		eventType: (params.eventType as AuditFilters['eventType']) || 'ALL',
+		severity: (params.severity as AuditFilters['severity']) || 'ALL',
+		startDate: params.startDate,
+		endDate: params.endDate,
+		success: params.success === 'true' ? true : params.success === 'false' ? false : 'ALL',
+		patientId: params.patientId,
+		sortOrder: (params.sortOrder as 'asc' | 'desc') || 'desc',
+		page: params.page ? parseInt(params.page, 10) : 1,
+		pageSize: params.pageSize ? parseInt(params.pageSize, 10) : 20,
 	}
 
-	const handlePageChange = (page: number) => {
-		setFilters({ ...filters, page })
-	}
+	let logsData
+	let statsData
+	let error: string | null = null
 
-	const handleExport = async (format: 'json' | 'csv') => {
-		setIsExporting(true)
-		try {
-			const today = new Date()
-			const thirtyDaysAgo = new Date(today)
-			thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-			await exportLogs({
-				format,
-				startDate: filters.startDate || thirtyDaysAgo.toISOString().split('T')[0],
-				endDate: filters.endDate || today.toISOString().split('T')[0],
-			})
-		} catch (err) {
-			console.error('Export failed:', err)
-		} finally {
-			setIsExporting(false)
+	try {
+		[logsData, statsData] = await Promise.all([
+			AuditService.getAuditLogsServer(filters),
+			AuditService.getAuditStatsServer(filters.startDate, filters.endDate).catch(() => null),
+		])
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Failed to load activity logs'
+		logsData = {
+			logs: [],
+			total: 0,
+			page: 1,
+			pageSize: 20,
+			totalPages: 0,
 		}
+		statsData = null
 	}
-
-	const stats = statsData?.stats
 
 	return (
 		<>
@@ -87,106 +92,17 @@ export default function ActivityPage() {
 			</header>
 
 			<div className='flex flex-1 flex-col gap-4 p-4 pt-0'>
-				<div className='space-y-2'>
-					<h2 className='text-2xl sm:text-3xl font-bold tracking-tight'>Activity Log</h2>
-					<p className='text-muted-foreground text-sm sm:text-base'>
-						Track all system activity for HIPAA compliance and audit purposes.
-					</p>
-				</div>
-
-				{stats && (
-					<div className='grid gap-4 md:grid-cols-4'>
-						<Card>
-							<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-								<CardTitle className='text-sm font-medium'>Total Events</CardTitle>
-								<Activity className='h-4 w-4 text-muted-foreground' />
-							</CardHeader>
-							<CardContent>
-								<div className='text-2xl font-bold'>{stats.totalEvents}</div>
-								<p className='text-xs text-muted-foreground'>
-									{(stats.successRate * 100).toFixed(1)}% success rate
-								</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-								<CardTitle className='text-sm font-medium'>PHI Access</CardTitle>
-								<Shield className='h-4 w-4 text-muted-foreground' />
-							</CardHeader>
-							<CardContent>
-								<div className='text-2xl font-bold'>{stats.phiAccessCount}</div>
-								<p className='text-xs text-muted-foreground'>
-									Protected health info accessed
-								</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-								<CardTitle className='text-sm font-medium'>AI Interactions</CardTitle>
-								<Brain className='h-4 w-4 text-muted-foreground' />
-							</CardHeader>
-							<CardContent>
-								<div className='text-2xl font-bold'>{stats.aiInteractionCount}</div>
-								<p className='text-xs text-muted-foreground'>
-									AI analysis requests
-								</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-								<CardTitle className='text-sm font-medium'>Avg Response</CardTitle>
-								<AlertTriangle className='h-4 w-4 text-muted-foreground' />
-							</CardHeader>
-							<CardContent>
-								<div className='text-2xl font-bold'>
-									{stats.averageResponseTime > 0 
-										? `${Math.round(stats.averageResponseTime)}ms`
-										: 'N/A'
-									}
-								</div>
-								<p className='text-xs text-muted-foreground'>
-									Average response time
-								</p>
-							</CardContent>
-						</Card>
+				{error ? (
+					<div className='rounded-md border border-red-200 bg-red-50 p-4 text-red-800'>
+						Failed to load activity logs. Please try again.
 					</div>
+				) : (
+					<ActivityPageClient
+						initialLogsData={logsData}
+						initialStatsData={statsData}
+						initialFilters={filters}
+					/>
 				)}
-
-				<Card>
-					<CardHeader>
-						<CardTitle>Recent Activity</CardTitle>
-						<CardDescription>
-							Your recent treatment plans and patient interactions
-						</CardDescription>
-					</CardHeader>
-					<CardContent className='space-y-4'>
-						<AuditLogFilters
-							filters={filters}
-							onFiltersChange={handleFiltersChange}
-							onExport={handleExport}
-							isExporting={isExporting}
-						/>
-
-						{error ? (
-							<div className='rounded-md border border-red-200 bg-red-50 p-4 text-red-800'>
-								Failed to load activity logs. Please try again.
-							</div>
-						) : (
-							<AuditLogTable
-								logs={data?.logs || []}
-								total={data?.total || 0}
-								page={data?.page || 1}
-								pageSize={data?.pageSize || 20}
-								totalPages={data?.totalPages || 1}
-								isLoading={isLoading}
-								onPageChange={handlePageChange}
-							/>
-						)}
-					</CardContent>
-				</Card>
 			</div>
 		</>
 	)

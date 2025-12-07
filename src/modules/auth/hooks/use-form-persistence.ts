@@ -10,7 +10,7 @@ interface UseFormPersistenceOptions<T> {
 	storage?: 'localStorage' | 'sessionStorage'
 }
 
-export function useFormPersistence<T extends Record<string, any>>({
+export function useFormPersistence<T extends Record<string, unknown>>({
 	key,
 	data,
 	excludeFields = [],
@@ -38,7 +38,7 @@ export function useFormPersistence<T extends Record<string, any>>({
 			try {
 				storageInstance.setItem(storageKey, JSON.stringify(filteredData))
 			} catch (error) {
-				console.error('Failed to save form data:', error)
+				// Failed to save form data
 			}
 		},
 		[storageKey, excludeFields, getStorage]
@@ -67,7 +67,7 @@ export function useFormPersistence<T extends Record<string, any>>({
 				return JSON.parse(savedData) as Partial<T>
 			}
 		} catch (error) {
-			console.error('Failed to load form data:', error)
+			// Failed to load form data
 		}
 
 		return null
@@ -80,7 +80,7 @@ export function useFormPersistence<T extends Record<string, any>>({
 		try {
 			storageInstance.removeItem(storageKey)
 		} catch (error) {
-			console.error('Failed to clear form data:', error)
+			// Failed to clear form data
 		}
 	}, [storageKey, getStorage])
 

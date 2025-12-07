@@ -102,9 +102,20 @@ interface OpenAITreatmentResponse {
 // OpenAI Configuration
 // ============================================
 
-const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY,
-})
+let openai: OpenAI | null = null
+
+function getOpenAIClient(): OpenAI {
+	if (!openai) {
+		const apiKey = process.env.OPENAI_API_KEY
+		if (!apiKey) {
+			const error = new Error('OPENAI_API_KEY is not configured')
+			error.name = 'OpenAIConfigurationError'
+			throw error
+		}
+		openai = new OpenAI({ apiKey })
+	}
+	return openai
+}
 
 const MODEL = 'gpt-4-turbo-preview'
 const TEMPERATURE = 0.2 // Low temperature for consistency
@@ -611,7 +622,7 @@ CRITICAL: DO NOT recommend NSAIDs - patient has ${this.getNSAIDContraindicatedCo
 ` : ''}
 `
 
-		const completion = await openai.chat.completions.create({
+		const completion = await getOpenAIClient().chat.completions.create({
 			model: MODEL,
 			messages: [
 				{ role: 'system', content: MEDICAL_SYSTEM_PROMPT },
@@ -746,7 +757,7 @@ Instead, recommend safer alternatives like Acetaminophen (Tylenol) for pain mana
 ` : ''}
 `
 
-		const completion = await openai.chat.completions.create({
+		const completion = await getOpenAIClient().chat.completions.create({
 			model: MODEL,
 			messages: [
 				{ role: 'system', content: MEDICAL_SYSTEM_PROMPT },

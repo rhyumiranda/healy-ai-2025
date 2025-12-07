@@ -219,7 +219,6 @@ export class CascadeValidatorService {
 				confidence: 60,
 			}
 		} catch (error) {
-			console.error('FDA validation error:', error)
 			return {
 				source: 'FDA',
 				isApproved: true,
@@ -299,7 +298,6 @@ export class CascadeValidatorService {
 				data: { interactionsChecked: interactions.length },
 			}
 		} catch (error) {
-			console.error('Interaction validation error:', error)
 			return {
 				source: 'INTERACTION',
 				isApproved: true,
@@ -351,7 +349,6 @@ export class CascadeValidatorService {
 				data: { guidelinesFound: guidelineDocs.length },
 			}
 		} catch (error) {
-			console.error('Guideline validation error:', error)
 			return {
 				source: 'GUIDELINE',
 				isApproved: true,
@@ -416,7 +413,6 @@ export class CascadeValidatorService {
 				},
 			}
 		} catch (error) {
-			console.error('PubMed validation error:', error)
 			return {
 				source: 'PUBMED',
 				isApproved: true,

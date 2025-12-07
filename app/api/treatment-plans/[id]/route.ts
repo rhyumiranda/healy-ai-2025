@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { AuditService } from '@/lib/services/audit.service'
+import type { Prisma } from '@/lib/generated/prisma'
 
 export async function GET(
 	req: Request,
@@ -56,16 +57,16 @@ export async function GET(
 const updatePlanSchema = z.object({
 	chiefComplaint: z.string().optional(),
 	currentSymptoms: z.string().optional(),
-	vitalSigns: z.any().optional(),
+	vitalSigns: z.unknown().optional(),
 	physicalExamNotes: z.string().optional(),
-	aiRecommendations: z.any().optional(),
-	finalPlan: z.any().optional(),
+	aiRecommendations: z.unknown().optional(),
+	finalPlan: z.unknown().optional(),
 	riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional().nullable(),
 	riskFactors: z.array(z.string()).optional(),
 	riskJustification: z.string().optional().nullable(),
-	drugInteractions: z.array(z.any()).optional(),
-	contraindications: z.array(z.any()).optional(),
-	alternatives: z.array(z.any()).optional(),
+	drugInteractions: z.array(z.unknown()).optional(),
+	contraindications: z.array(z.unknown()).optional(),
+	alternatives: z.array(z.unknown()).optional(),
 	status: z.enum(['DRAFT', 'APPROVED', 'REJECTED']).optional(),
 	wasModified: z.boolean().optional(),
 	modificationNotes: z.string().optional().nullable(),
@@ -104,8 +105,21 @@ export async function PATCH(
 		const treatmentPlan = await prisma.treatmentPlan.update({
 			where: { id },
 			data: {
-				...data,
+				chiefComplaint: data.chiefComplaint,
+				currentSymptoms: data.currentSymptoms,
+				vitalSigns: data.vitalSigns !== undefined ? (data.vitalSigns as Prisma.InputJsonValue) : undefined,
+				physicalExamNotes: data.physicalExamNotes,
+				aiRecommendations: data.aiRecommendations !== undefined ? (data.aiRecommendations as Prisma.InputJsonValue) : undefined,
+				finalPlan: data.finalPlan !== undefined ? (data.finalPlan as Prisma.InputJsonValue) : undefined,
+				riskLevel: data.riskLevel,
+				riskFactors: data.riskFactors,
+				riskJustification: data.riskJustification,
+				drugInteractions: data.drugInteractions !== undefined ? (data.drugInteractions as Prisma.InputJsonValue[]) : undefined,
+				contraindications: data.contraindications !== undefined ? (data.contraindications as Prisma.InputJsonValue[]) : undefined,
+				alternatives: data.alternatives !== undefined ? (data.alternatives as Prisma.InputJsonValue[]) : undefined,
+				status: data.status,
 				wasModified: data.wasModified ?? (data.finalPlan ? true : existing.wasModified),
+				modificationNotes: data.modificationNotes,
 				approvedAt: data.status === 'APPROVED' ? new Date() : existing.approvedAt,
 			},
 			include: {

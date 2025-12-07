@@ -11,9 +11,95 @@ import type {
 	AIAnalysisRequest,
 	AIAnalysisResponse,
 } from '../types'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { AuditService } from '@/lib/services/audit.service'
 
 export class TreatmentPlanService {
 	private static baseUrl = '/api/treatment-plans'
+
+	static async getTreatmentPlansServer(filters: TreatmentPlanFilters = {}): Promise<TreatmentPlansResponse> {
+		const session = await getServerSession(authOptions)
+
+		if (!session?.user?.id) {
+			throw new Error('Unauthorized')
+		}
+
+		const startTime = Date.now()
+		const doctorId = session.user.id
+
+		const page = filters.page || 1
+		const pageSize = filters.pageSize || 10
+		const search = filters.search || ''
+		const status = filters.status
+		const riskLevel = filters.riskLevel
+		const patientId = filters.patientId
+
+		const where = {
+			doctorId,
+			...(search && {
+				OR: [
+					{ chiefComplaint: { contains: search, mode: 'insensitive' as const } },
+					{ patient: { name: { contains: search, mode: 'insensitive' as const } } },
+				],
+			}),
+			...(status && status !== 'ALL' && { status: status as 'DRAFT' | 'APPROVED' | 'REJECTED' }),
+			...(riskLevel && riskLevel !== 'ALL' && { riskLevel: riskLevel as 'LOW' | 'MEDIUM' | 'HIGH' }),
+			...(patientId && { patientId }),
+		}
+
+		const [plans, total] = await Promise.all([
+			prisma.treatmentPlan.findMany({
+				where,
+				include: {
+					patient: {
+						select: { id: true, name: true },
+					},
+				},
+				orderBy: { createdAt: 'desc' },
+				skip: (page - 1) * pageSize,
+				take: pageSize,
+			}),
+			prisma.treatmentPlan.count({ where }),
+		])
+
+		await AuditService.log('treatment_plan_view', 'Treatment plans list viewed', {
+			userId: session.user.id,
+			resourceType: 'treatment_plan',
+			details: {
+				search,
+				status,
+				riskLevel,
+				resultsCount: plans.length,
+			},
+			success: true,
+			durationMs: Date.now() - startTime,
+			phiAccessed: true,
+		}).catch(() => {
+			// Failed to log audit event
+		})
+
+		return {
+			plans: plans.map(plan => ({
+				id: plan.id,
+				patientId: plan.patientId,
+				patient: {
+					id: plan.patient.id,
+					name: plan.patient.name,
+				},
+				chiefComplaint: plan.chiefComplaint,
+				status: plan.status,
+				riskLevel: plan.riskLevel,
+				createdAt: plan.createdAt.toISOString(),
+				updatedAt: plan.updatedAt.toISOString(),
+			})),
+			total,
+			page,
+			pageSize,
+			totalPages: Math.ceil(total / pageSize),
+		}
+	}
 
 	/**
 	 * Get list of treatment plans with filtering

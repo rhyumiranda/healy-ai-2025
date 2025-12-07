@@ -1,6 +1,3 @@
-'use client'
-
-import Link from 'next/link'
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -11,28 +8,50 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Button } from '@/components/ui/button'
-import { Plus, RefreshCw } from 'lucide-react'
-import { usePatients } from '@/src/modules/patients'
-import {
-	PatientTable,
-	PatientFilters,
-	PatientPagination,
-} from '@/components/patients'
+import { PatientsPageClient } from '@/components/patients/patients-page-client'
+import { PatientService } from '@/src/modules/patients/services/patient.service'
+import type { PatientFilters } from '@/src/modules/patients/types'
 
-export default function PatientsPage() {
-	const {
-		patients,
-		total,
-		page,
-		pageSize,
-		totalPages,
-		isLoading,
-		error,
-		filters,
-		updateFilters,
-		refetch,
-	} = usePatients({ pageSize: 10 })
+export const revalidate = 30
+
+interface PatientsPageProps {
+	searchParams: Promise<{
+		search?: string
+		gender?: string
+		sortBy?: string
+		sortOrder?: string
+		page?: string
+		pageSize?: string
+	}>
+}
+
+export default async function PatientsPage({ searchParams }: PatientsPageProps) {
+	const params = await searchParams
+
+	const filters: PatientFilters = {
+		search: params.search,
+		gender: params.gender as 'MALE' | 'FEMALE' | 'OTHER' | undefined,
+		sortBy: (params.sortBy as 'name' | 'createdAt' | 'updatedAt') || 'updatedAt',
+		sortOrder: (params.sortOrder as 'asc' | 'desc') || 'desc',
+		page: params.page ? parseInt(params.page, 10) : 1,
+		pageSize: params.pageSize ? parseInt(params.pageSize, 10) : 10,
+	}
+
+	let data
+	let error: string | null = null
+
+	try {
+		data = await PatientService.getPatientsServer(filters)
+	} catch (err) {
+		error = err instanceof Error ? err.message : 'Failed to load patients'
+		data = {
+			patients: [],
+			total: 0,
+			page: 1,
+			pageSize: 10,
+			totalPages: 0,
+		}
+	}
 
 	return (
 		<>
@@ -58,53 +77,13 @@ export default function PatientsPage() {
 			</header>
 
 			<div className='flex flex-1 flex-col gap-6 p-4 pt-0'>
-				<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-					<div>
-						<h1 className='text-2xl font-semibold tracking-tight'>Patients</h1>
-						<p className='text-sm text-muted-foreground'>
-							Manage patient records and medical histories
-						</p>
-					</div>
-					<div className='flex items-center gap-2 w-full sm:w-auto'>
-						<Button
-							variant='outline'
-							size='sm'
-							onClick={refetch}
-							disabled={isLoading}
-							className='flex-1 sm:flex-none'
-						>
-							<RefreshCw
-								className={`h-4 w-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`}
-							/>
-							<span className='hidden sm:inline'>Refresh</span>
-						</Button>
-						<Link href='/dashboard/patients/new' className='flex-1 sm:flex-none'>
-							<Button size='sm' className='w-full'>
-								<Plus className='h-4 w-4 sm:mr-2' />
-								<span className='hidden sm:inline'>Add Patient</span>
-								<span className='sm:hidden'>Add</span>
-							</Button>
-						</Link>
-					</div>
-				</div>
-
-				<PatientFilters filters={filters} onFilterChange={updateFilters} />
-
-				{error && (
+				{error ? (
 					<div className='rounded-lg border border-destructive/50 bg-destructive/10 p-4'>
 						<p className='text-sm text-destructive'>{error}</p>
 					</div>
+				) : (
+					<PatientsPageClient initialData={data} initialFilters={filters} />
 				)}
-
-				<PatientTable patients={patients} isLoading={isLoading} />
-
-				<PatientPagination
-					page={page}
-					totalPages={totalPages}
-					total={total}
-					pageSize={pageSize}
-					onPageChange={(newPage) => updateFilters({ page: newPage })}
-				/>
 			</div>
 		</>
 	)

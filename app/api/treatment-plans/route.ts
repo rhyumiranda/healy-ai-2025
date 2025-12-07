@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { AuditService } from '@/lib/services/audit.service'
+import type { Prisma } from '@/lib/generated/prisma'
 
 export async function GET(req: Request) {
 	const startTime = Date.now()
@@ -62,7 +63,9 @@ export async function GET(req: Request) {
 			success: true,
 			durationMs: Date.now() - startTime,
 			phiAccessed: true,
-		}).catch(console.error)
+		}).catch(() => {
+			// Failed to log audit event
+		})
 
 		return NextResponse.json({
 			plans,
@@ -72,7 +75,6 @@ export async function GET(req: Request) {
 			totalPages: Math.ceil(total / pageSize),
 		})
 	} catch (error) {
-		console.error('Error fetching treatment plans:', error)
 		return NextResponse.json(
 			{ error: 'Failed to fetch treatment plans' },
 			{ status: 500 }
@@ -84,15 +86,15 @@ const createPlanSchema = z.object({
 	patientId: z.string(),
 	chiefComplaint: z.string().min(1),
 	currentSymptoms: z.string(),
-	vitalSigns: z.any().optional(),
+	vitalSigns: z.unknown().optional(),
 	physicalExamNotes: z.string().optional(),
-	aiRecommendations: z.any().optional(),
+	aiRecommendations: z.unknown().optional(),
 	riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
 	riskFactors: z.array(z.string()).optional(),
 	riskJustification: z.string().optional(),
-	drugInteractions: z.array(z.any()).optional(),
-	contraindications: z.array(z.any()).optional(),
-	alternatives: z.array(z.any()).optional(),
+	drugInteractions: z.array(z.unknown()).optional(),
+	contraindications: z.array(z.unknown()).optional(),
+	alternatives: z.array(z.unknown()).optional(),
 	status: z.enum(['DRAFT', 'APPROVED', 'REJECTED']).optional(),
 })
 
@@ -128,15 +130,15 @@ export async function POST(req: Request) {
 				doctorId: session.user.id,
 				chiefComplaint: data.chiefComplaint,
 				currentSymptoms: data.currentSymptoms,
-				vitalSigns: data.vitalSigns || null,
+				vitalSigns: data.vitalSigns !== undefined ? (data.vitalSigns as Prisma.InputJsonValue) : undefined,
 				physicalExamNotes: data.physicalExamNotes || null,
-				aiRecommendations: data.aiRecommendations || null,
+				aiRecommendations: data.aiRecommendations !== undefined ? (data.aiRecommendations as Prisma.InputJsonValue) : undefined,
 				riskLevel: data.riskLevel || null,
 				riskFactors: data.riskFactors || [],
 				riskJustification: data.riskJustification || null,
-				drugInteractions: data.drugInteractions || [],
-				contraindications: data.contraindications || [],
-				alternatives: data.alternatives || [],
+				drugInteractions: data.drugInteractions !== undefined ? (data.drugInteractions as Prisma.InputJsonValue[]) : undefined,
+				contraindications: data.contraindications !== undefined ? (data.contraindications as Prisma.InputJsonValue[]) : undefined,
+				alternatives: data.alternatives !== undefined ? (data.alternatives as Prisma.InputJsonValue[]) : undefined,
 				status: data.status || 'DRAFT',
 			},
 			include: {
@@ -150,7 +152,9 @@ export async function POST(req: Request) {
 			planId: treatmentPlan.id,
 			aiGenerated: !!data.aiRecommendations,
 			success: true,
-		}).catch(console.error)
+		}).catch(() => {
+			// Failed to log audit event
+		})
 
 		return NextResponse.json({ treatmentPlan }, { status: 201 })
 	} catch (error) {
@@ -161,7 +165,6 @@ export async function POST(req: Request) {
 			)
 		}
 
-		console.error('Error creating treatment plan:', error)
 		return NextResponse.json(
 			{ error: 'Failed to create treatment plan' },
 			{ status: 500 }

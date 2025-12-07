@@ -48,7 +48,7 @@ export function useRegistrationWizard() {
 					}
 				}
 			} catch (error) {
-				console.error('Failed to load saved registration data:', error)
+				// Failed to load saved registration data
 			}
 			setIsInitialized(true)
 		}
@@ -69,7 +69,7 @@ export function useRegistrationWizard() {
 				sessionStorage.setItem('form_registration', JSON.stringify(dataToSave))
 				sessionStorage.setItem('form_registration_step', currentStep.toString())
 			} catch (error) {
-				console.error('Failed to save registration data:', error)
+				// Failed to save registration data
 			}
 		}, 500)
 
@@ -196,7 +196,7 @@ export function useRegistrationWizard() {
 					sessionStorage.removeItem('form_registration')
 					sessionStorage.removeItem('form_registration_step')
 				} catch (e) {
-					console.error('Failed to clear saved data:', e)
+					// Failed to clear saved data
 				}
 
 				router.push('/auth/verification-pending')

@@ -1,4 +1,4 @@
-import { Shield, Brain, Database, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Shield, Brain, Database, CheckCircle2, AlertTriangle, ClipboardList, Edit, FileCheck } from 'lucide-react'
 
 export const STATS = [
 	{ 
@@ -58,6 +58,7 @@ export const FEATURES = [
 export const WORKFLOW_STEPS = [
 	{
 		step: 1,
+		icon: ClipboardList,
 		title: 'Intake Phase',
 		description: 'Comprehensive patient data collection',
 		details: [
@@ -68,6 +69,7 @@ export const WORKFLOW_STEPS = [
 	},
 	{
 		step: 2,
+		icon: Brain,
 		title: 'AI Analysis Phase',
 		description: 'Intelligent treatment plan generation',
 		details: [
@@ -78,6 +80,7 @@ export const WORKFLOW_STEPS = [
 	},
 	{
 		step: 3,
+		icon: Edit,
 		title: 'Doctor Review/Edit Phase',
 		description: 'Expert oversight and customization',
 		details: [
@@ -89,6 +92,7 @@ export const WORKFLOW_STEPS = [
 	},
 	{
 		step: 4,
+		icon: FileCheck,
 		title: 'Final Summary Phase',
 		description: 'Complete treatment documentation',
 		details: [

@@ -6,13 +6,9 @@ import { verifyPassword } from '@/lib/auth-utils'
 import { AuditService } from '@/lib/services/audit.service'
 
 export const authOptions: NextAuthOptions = {
-<<<<<<< Current (Your changes)
-	adapter: PrismaAdapter(prisma) as unknown as NextAuthOptions['adapter'],
-=======
 	// @ts-expect-error - Type incompatibility between @auth/prisma-adapter v2.x and next-auth v4.x
 	// The adapter is structurally compatible at runtime, but TypeScript types differ slightly
 	adapter: PrismaAdapter(prisma),
->>>>>>> Incoming (Background Agent changes)
 	session: {
 		strategy: 'jwt',
 		maxAge: 30 * 24 * 60 * 60,

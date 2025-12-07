@@ -41,7 +41,7 @@ export function HeroSection() {
 						className="max-w-3xl mx-auto text-center"
 					>
 						<motion.div variants={itemVariants}>
-							<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50/90 backdrop-blur-sm text-blue-700 text-sm font-medium mb-8">
+							<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50/90 dark:bg-blue-900/90 backdrop-blur-sm text-blue-700 dark:text-blue-300 text-sm font-medium mb-8">
 								<Zap className="w-4 h-4" />
 								Reduce medical errors by up to 80%
 							</div>
@@ -49,14 +49,14 @@ export function HeroSection() {
 						
 						<motion.h1
 							variants={itemVariants}
-							className="text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight mb-6"
+							className="text-5xl lg:text-6xl font-bold text-slate-900 dark:text-slate-50 tracking-tight mb-6"
 						>
 							AI-Powered Clinical Decision Support
 						</motion.h1>
 						
 						<motion.p
 							variants={itemVariants}
-							className="text-xl text-slate-600 mb-10 leading-relaxed"
+							className="text-xl text-slate-600 dark:text-slate-300 mb-10 leading-relaxed"
 						>
 							Intelligent treatment plan recommendations with automated safety checks. 
 							Flag drug interactions, contraindications, and dosage issues before they become critical.
@@ -68,19 +68,19 @@ export function HeroSection() {
 						>
 							<Link
 								href={NAV_LINKS.register}
-								className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 flex items-center justify-center gap-2"
+								className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-200 dark:hover:shadow-blue-900/50 flex items-center justify-center gap-2"
 							>
 								Start Free Trial
 								<ArrowRight className="w-5 h-5" />
 							</Link>
-							<button className="w-full sm:w-auto px-8 py-4 bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-white transition-colors">
+							<button className="w-full sm:w-auto px-8 py-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold hover:bg-white dark:hover:bg-slate-800 transition-colors">
 								Watch Demo
 							</button>
 						</motion.div>
 						
 						<motion.p
 							variants={itemVariants}
-							className="text-sm text-slate-500 mt-6"
+							className="text-sm text-slate-500 dark:text-slate-400 mt-6"
 						>
 							No credit card required • Free 14-day trial • Cancel anytime
 						</motion.p>

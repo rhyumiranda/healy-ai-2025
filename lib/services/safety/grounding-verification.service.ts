@@ -58,7 +58,7 @@ export class GroundingVerificationService {
 				claims.push(verificationResult)
 
 				if (!verificationResult.isGrounded && verificationResult.contradictions.length === 0) {
-					warnings.push(`Unverified claim: ${claim.claim.slice(0, 100)}`)
+					warnings.push(`Unverified claim: ${claim.claim?.slice(0, 100) ?? 'Unknown claim'}`)
 				}
 
 				if (verificationResult.contradictions.length > 0) {

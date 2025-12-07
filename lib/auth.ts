@@ -6,7 +6,7 @@ import { verifyPassword } from '@/lib/auth-utils'
 import { AuditService } from '@/lib/services/audit.service'
 
 export const authOptions: NextAuthOptions = {
-	adapter: PrismaAdapter(prisma) as ReturnType<typeof PrismaAdapter>,
+	adapter: PrismaAdapter(prisma) as unknown as NextAuthOptions['adapter'],
 	session: {
 		strategy: 'jwt',
 		maxAge: 30 * 24 * 60 * 60,

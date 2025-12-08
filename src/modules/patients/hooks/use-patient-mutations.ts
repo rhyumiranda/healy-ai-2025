@@ -36,6 +36,7 @@ export function useCreatePatient() {
 }
 
 export function useUpdatePatient() {
+	const router = useRouter()
 	const [isLoading, setIsLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
@@ -49,6 +50,7 @@ export function useUpdatePatient() {
 				setError(null)
 				const patient = await PatientService.updatePatient(id, input)
 				toast.success('Patient updated successfully')
+				router.refresh()
 				return patient
 			} catch (err) {
 				const errorMessage =
@@ -59,7 +61,7 @@ export function useUpdatePatient() {
 				setIsLoading(false)
 			}
 		},
-		[]
+		[router]
 	)
 
 	return { updatePatient, isLoading, error }

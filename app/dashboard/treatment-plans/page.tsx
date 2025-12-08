@@ -12,8 +12,6 @@ import { TreatmentPlansPageClient } from '@/components/treatment-plans/treatment
 import { TreatmentPlanService } from '@/src/modules/treatment-plans/services/treatment-plan.service'
 import type { TreatmentPlanFilters } from '@/src/modules/treatment-plans/types'
 
-export const revalidate = 30
-
 interface TreatmentPlansPageProps {
 	searchParams: Promise<{
 		search?: string

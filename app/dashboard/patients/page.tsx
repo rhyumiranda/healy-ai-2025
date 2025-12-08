@@ -12,8 +12,6 @@ import { PatientsPageClient } from '@/components/patients/patients-page-client'
 import { PatientService } from '@/src/modules/patients/services/patient.service'
 import type { PatientFilters } from '@/src/modules/patients/types'
 
-export const revalidate = 30
-
 interface PatientsPageProps {
 	searchParams: Promise<{
 		search?: string

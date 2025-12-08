@@ -30,20 +30,6 @@ const stepVariants = {
 	}
 }
 
-const iconContainerVariants = {
-	hidden: { scale: 0.8, opacity: 0 },
-	visible: {
-		scale: 1,
-		opacity: 1,
-		transition: {
-			type: 'spring' as const,
-			stiffness: 200,
-			damping: 15,
-			delay: 0.1
-		}
-	}
-}
-
 const iconContinuousVariants = {
 	animate: {
 		y: [0, -8, 0],

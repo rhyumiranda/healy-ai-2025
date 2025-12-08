@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AuditLogTable } from '@/components/audit/audit-log-table'
 import { AuditLogFilters } from '@/components/audit/audit-log-filters'
@@ -21,6 +23,21 @@ export function ActivityPageClient({ initialLogsData, initialStatsData, initialF
 	const [isRefreshing, setIsRefreshing] = useState(false)
 	const { exportLogs } = useExportAuditLogs()
 	const [isExporting, setIsExporting] = useState(false)
+
+	useEffect(() => {
+		const handleFocus = () => {
+			router.refresh()
+		}
+
+		window.addEventListener('focus', handleFocus)
+		return () => window.removeEventListener('focus', handleFocus)
+	}, [router])
+
+	const refetch = async () => {
+		setIsRefreshing(true)
+		router.refresh()
+		setTimeout(() => setIsRefreshing(false), 500)
+	}
 
 	const handleFiltersChange = (newFilters: AuditFilters) => {
 		setFilters(newFilters)
@@ -69,11 +86,23 @@ export function ActivityPageClient({ initialLogsData, initialStatsData, initialF
 
 	return (
 		<>
-			<div className='space-y-2'>
-				<h2 className='text-2xl sm:text-3xl font-bold tracking-tight'>Activity Log</h2>
-				<p className='text-muted-foreground text-sm sm:text-base'>
-					Track all system activity for HIPAA compliance and audit purposes.
-				</p>
+			<div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+				<div className='space-y-2'>
+					<h2 className='text-2xl sm:text-3xl font-bold tracking-tight'>Activity Log</h2>
+					<p className='text-muted-foreground text-sm sm:text-base'>
+						Track all system activity for HIPAA compliance and audit purposes.
+					</p>
+				</div>
+				<Button
+					variant='outline'
+					size='sm'
+					onClick={refetch}
+					disabled={isRefreshing}
+					className='flex-shrink-0'
+				>
+					<RefreshCw className={`h-4 w-4 sm:mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+					<span className='hidden sm:inline'>Refresh</span>
+				</Button>
 			</div>
 
 			{stats && (

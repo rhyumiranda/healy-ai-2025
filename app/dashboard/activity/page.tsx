@@ -12,8 +12,6 @@ import { ActivityPageClient } from '@/components/audit/activity-page-client'
 import { AuditService } from '@/src/modules/audit/services/audit.service'
 import type { AuditFilters } from '@/src/modules/audit/types'
 
-export const revalidate = 30
-
 interface ActivityPageProps {
 	searchParams: Promise<{
 		search?: string

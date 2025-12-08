@@ -54,6 +54,7 @@ interface UseUpdateTreatmentPlanReturn {
 }
 
 export function useUpdateTreatmentPlan(): UseUpdateTreatmentPlanReturn {
+	const router = useRouter()
 	const [isLoading, setIsLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
@@ -69,6 +70,7 @@ export function useUpdateTreatmentPlan(): UseUpdateTreatmentPlanReturn {
 					finalPlan: input.finalPlan as Record<string, unknown> | undefined,
 				})
 				toast.success('Treatment plan updated successfully')
+				router.refresh()
 				return plan
 			} catch (err) {
 				setError(err instanceof Error ? err.message : 'Failed to update treatment plan')
@@ -77,7 +79,7 @@ export function useUpdateTreatmentPlan(): UseUpdateTreatmentPlanReturn {
 				setIsLoading(false)
 			}
 		},
-		[]
+		[router]
 	)
 
 	return {

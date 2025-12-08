@@ -13,8 +13,6 @@ import { DashboardService } from '@/src/modules/dashboard/services/dashboard.ser
 import type { DashboardStats, RecentActivity } from '@/src/modules/dashboard/types'
 import { AlertTriangle } from 'lucide-react'
 
-export const revalidate = 30
-
 export default async function DashboardPage() {
 	let stats: DashboardStats
 	let recentActivity: RecentActivity[]

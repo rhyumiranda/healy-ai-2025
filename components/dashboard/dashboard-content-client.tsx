@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, Users, FileText, AlertTriangle, Clock } from 'lucide-react'
 import type { DashboardStats, RecentActivity } from '@/src/modules/dashboard/types'
@@ -17,6 +19,17 @@ interface DashboardContentClientProps {
 }
 
 export function DashboardContentClient({ stats, recentActivity }: DashboardContentClientProps) {
+	const router = useRouter()
+
+	useEffect(() => {
+		const handleFocus = () => {
+			router.refresh()
+		}
+
+		window.addEventListener('focus', handleFocus)
+		return () => window.removeEventListener('focus', handleFocus)
+	}, [router])
+
 	const statsConfig = [
 		{
 			title: 'Total Patients',

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Shield, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
@@ -38,15 +38,12 @@ export function AppHeader({
 						initial={{ scale: 0.8, opacity: 0 }}
 						animate={{ scale: 1, opacity: 1 }}
 						transition={{ delay: 0.2, duration: 0.4 }}
-						className="flex items-center gap-2"
+						className="flex items-center"
 					>
 						<Link
 							href="/"
-							className="flex items-center gap-2 transition-opacity hover:opacity-80"
+							className="transition-opacity hover:opacity-80"
 						>
-							<div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-								<Shield className="w-5 h-5 text-white" />
-							</div>
 							<span className="text-lg font-semibold text-slate-900">
 								HealyAI
 							</span>

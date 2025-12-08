@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { WORKFLOW_STEPS } from '@/src/modules/landing/constants'
 import type { LucideIcon } from 'lucide-react'
@@ -22,7 +22,7 @@ const cardVariants = {
 		opacity: 1,
 		y: 0,
 		transition: {
-			type: 'spring',
+			type: 'spring' as const,
 			stiffness: 100,
 			damping: 15,
 			duration: 0.6
@@ -139,10 +139,10 @@ export function WorkflowSection() {
 					className="text-center mb-16"
 				>
 					<h2 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-slate-50 mb-4">
-						How It Works
+						We don&apos;t replace doctors, We give them superpowers
 					</h2>
 					<p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-						A streamlined clinical workflow from patient intake to final treatment decision
+						AI-powered tools that amplify your clinical expertise, accelerate decision-making, and enhance patient care—all while keeping you in complete control
 					</p>
 				</motion.div>
 

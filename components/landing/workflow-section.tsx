@@ -46,7 +46,7 @@ function AnimatedStepIcon({ Icon, stepIndex, color, bgColor }: AnimatedStepIconP
 				animate={{ scale: 1, opacity: 1 }}
 				transition={{ duration: 0.5, delay: stepIndex * 0.2 }}
 			>
-				<div className="absolute inset-0 rounded-full bg-gradient-to-r from-violet-500/20 via-purple-500/20 to-blue-500/20" />
+				<div className="absolute inset-0 rounded-full bg-linear-to-r from-violet-500/20 via-purple-500/20 to-blue-500/20" />
 
 				<motion.div
 					className="absolute inset-0 rounded-full border-2 border-violet-500/30"
